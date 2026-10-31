@@ -21,6 +21,7 @@ function stepSprings(dt) {
 }
 const lerp = (a, b, t) => a + (b - a) * t;
 const lerpColor = (c, target, t) => { c.r = lerp(c.r, target.r, t); c.g = lerp(c.g, target.g, t); c.b = lerp(c.b, target.b, t); };
+const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
 /* ---------- renderer ---------- */
 const canvas = document.getElementById("crater");
@@ -240,7 +241,7 @@ const CHAPTERS = [
   { skyTop: "#fdeef0", skyBot: "#f9dbe0", fog: ["#f9dbe0", 0.012], wall: "#cbb7a0", slope: "#a8b08e", ground: "#98a578",
     water: 0.95, waterC: "#f2a7b8", trees: 0.3, treesC: "#5f7a52", animals: 0, flams: 1, maasai: 0, fire: 0,
     stars: 0, motes: ["#ffffff", 0.22], night: false,
-    caption: "A lake blushing with flamingos.", whisper: "Tap the water." },
+    caption: "A lake blushing with flamingos.", whisper: "The water answers every touch." },
   { skyTop: "#0d1226", skyBot: "#233052", fog: ["#1b2340", 0.028], wall: "#232c4e", slope: "#1d2542", ground: "#161c33",
     water: 0.18, waterC: "#3a3050", trees: 0.45, treesC: "#141a30", animals: 0, flams: 0, maasai: 0.9, fire: 1,
     stars: 1, motes: ["#d8d2c0", 0.4], night: true,
@@ -263,7 +264,7 @@ const caption = document.getElementById("caption");
 const whisper = document.getElementById("whisper");
 const chrome = [...document.querySelectorAll(".chrome")];
 const dots = [...document.querySelectorAll(".dot")];
-let idleTimer, whisperTimer;
+let idleTimer, whisperTimer, lakeCueTimer;
 function wakeChrome() {
   chrome.forEach((c) => c.classList.remove("idle"));
   clearTimeout(idleTimer);
@@ -283,6 +284,11 @@ function setChapter(i) {
   dots.forEach((d, j) => d.classList.toggle("active", j === i));
   caption.classList.remove("show"); whisper.classList.remove("show");
   clearTimeout(whisperTimer);
+  clearInterval(lakeCueTimer);
+  if (i === 2 && !reduceMotion) {
+    setTimeout(() => ripple(-4 + Math.random() * 8, -6.1 + Math.random() * 1.4), 2400);
+    lakeCueTimer = setInterval(() => ripple(-8 + Math.random() * 16, -6.3 + Math.random() * 1.8), 5200);
+  }
   setTimeout(() => { caption.textContent = c.caption; caption.classList.add("show"); }, 1100);
   whisperTimer = setTimeout(() => { whisper.textContent = c.whisper; whisper.classList.add("show"); }, 3200);
   wakeChrome();
@@ -315,8 +321,8 @@ function tick() {
   const dt = Math.min(clock.getDelta(), 0.05);
   const t = clock.elapsedTime;
 
-  camX = lerp(camX, px * 1.1, 1 - Math.exp(-3.2 * dt));
-  camY = lerp(camY, -py * 0.5, 1 - Math.exp(-3.2 * dt));
+  camX = reduceMotion ? 0 : lerp(camX, px * 1.1, 1 - Math.exp(-3.2 * dt));
+  camY = reduceMotion ? 0 : lerp(camY, -py * 0.5, 1 - Math.exp(-3.2 * dt));
   camera.position.x = camX; camera.position.y = camY + 0.4;
   camera.lookAt(camX * 0.4, camY * 0.3 + 0.6, -20);
 
@@ -338,19 +344,23 @@ function tick() {
   maasaiMat.opacity = lerp(maasaiMat.opacity, target.maasai, k);
   starMat.opacity = lerp(starMat.opacity, target.stars, k);
   moteMat.opacity = lerp(moteMat.opacity, target.motesO, k);
-  fireMat.opacity = lerp(fireMat.opacity, target.fire * (0.6 + Math.sin(t * 5.2) * 0.25 + Math.sin(t * 9.7) * 0.15), k);
+  fireMat.opacity = lerp(fireMat.opacity, target.fire * (reduceMotion ? 0.75 : 0.6 + Math.sin(t * 5.2) * 0.25 + Math.sin(t * 9.7) * 0.15), k);
 
-  for (const tr of treeList) tr.g.rotation.z = Math.sin(t * 0.6 + tr.phase) * 0.015;
-  for (const a of animalList) a.g.rotation.z = Math.sin(t * 0.5 + a.phase) * 0.01;
-  for (const f of flams) f.m.position.y += Math.sin(t * 1.3 + f.phase) * f.amp * dt * 3;
-
-  const pos = moteGeo.attributes.position;
-  for (let i = 0; i < pos.count; i++) {
-    let x = pos.getX(i) + dt * (0.35 + (i % 5) * 0.08);
-    if (x > 46) x = -46;
-    pos.setX(i, x);
+  if (!reduceMotion) {
+    for (const tr of treeList) tr.g.rotation.z = Math.sin(t * 0.6 + tr.phase) * 0.015;
+    for (const a of animalList) a.g.rotation.z = Math.sin(t * 0.5 + a.phase) * 0.01;
+    for (const f of flams) f.m.position.y += Math.sin(t * 1.3 + f.phase) * f.amp * dt * 3;
   }
-  pos.needsUpdate = true;
+
+  if (!reduceMotion) {
+    const pos = moteGeo.attributes.position;
+    for (let i = 0; i < pos.count; i++) {
+      let x = pos.getX(i) + dt * (0.35 + (i % 5) * 0.08);
+      if (x > 46) x = -46;
+      pos.setX(i, x);
+    }
+    pos.needsUpdate = true;
+  }
 
   for (let i = ripples.length - 1; i >= 0; i--) {
     const r = ripples[i];
