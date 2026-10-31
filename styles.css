@@ -35,7 +35,7 @@ body {
 
 /* chrome */
 .chrome { transition: opacity 0.9s ease; }
-.chrome.idle { opacity: 0; }
+.chrome.idle { opacity: 0; pointer-events: none; }
 
 #masthead {
   position: fixed; top: max(1.1rem, env(safe-area-inset-top)); left: 1.4rem; z-index: 20;
@@ -76,6 +76,7 @@ body.night #caption { text-shadow: 0 1px 14px rgba(8, 10, 20, 0.7); }
   backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
   box-shadow: 0 6px 24px rgba(46, 39, 24, 0.12), inset 0 1px 0 rgba(255,255,255,0.5);
   transition: opacity 0.9s ease, background 1.2s ease;
+  touch-action: pan-y;
 }
 body.night #dock {
   background: rgba(16, 20, 42, 0.45);
