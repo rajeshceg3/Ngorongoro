@@ -295,6 +295,47 @@ function setChapter(i) {
 }
 dots.forEach((d, i) => d.addEventListener("click", () => setChapter(i)));
 
+/* ---------- dock gestures: swipe to change face, arrows to step ---------- */
+const dock = document.getElementById("dock");
+let dockDownX = 0, dockDownY = 0, dockSwiping = false, dockPointerId = null, suppressDockClick = false;
+dock.addEventListener("pointerdown", (e) => {
+  dockDownX = e.clientX; dockDownY = e.clientY; dockSwiping = false; dockPointerId = e.pointerId;
+});
+dock.addEventListener("pointermove", (e) => {
+  if (dockPointerId !== e.pointerId) return;
+  const dx = e.clientX - dockDownX, dy = e.clientY - dockDownY;
+  if (!dockSwiping && Math.abs(dx) > 8 && Math.abs(dx) > Math.abs(dy)) {
+    dockSwiping = true;
+    try { dock.setPointerCapture(e.pointerId); } catch (_) {}
+  }
+});
+dock.addEventListener("pointerup", (e) => {
+  if (dockPointerId !== e.pointerId) return;
+  const dx = e.clientX - dockDownX;
+  dockPointerId = null;
+  if (dockSwiping) {
+    suppressDockClick = true;
+    if (dx <= -48) setChapter((chapter + 1) % CHAPTERS.length);
+    else if (dx >= 48) setChapter((chapter + CHAPTERS.length - 1) % CHAPTERS.length);
+  }
+  dockSwiping = false;
+});
+dock.addEventListener("pointercancel", () => { dockPointerId = null; dockSwiping = false; });
+dock.addEventListener("click", (e) => {
+  if (suppressDockClick) { e.preventDefault(); e.stopPropagation(); suppressDockClick = false; }
+}, true);
+dock.addEventListener("keydown", (e) => {
+  if (e.key === "ArrowRight") {
+    e.preventDefault();
+    setChapter((chapter + 1) % CHAPTERS.length);
+    dots[chapter] && dots[chapter].focus();
+  } else if (e.key === "ArrowLeft") {
+    e.preventDefault();
+    setChapter((chapter + CHAPTERS.length - 1) % CHAPTERS.length);
+    dots[chapter] && dots[chapter].focus();
+  }
+});
+
 /* ---------- pointer ---------- */
 let px = 0, py = 0, dragging = false, moved = 0, downX = 0, downY = 0;
 addEventListener("pointerdown", (e) => { dragging = true; moved = 0; downX = e.clientX; downY = e.clientY; wakeChrome(); });
