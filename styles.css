@@ -53,18 +53,24 @@ body {
   padding: 0 2rem; pointer-events: none;
   opacity: 0; transform: translateY(10px);
   transition: opacity 1.1s ease, transform 1.1s var(--ease-spring), color 1.2s ease;
-  text-shadow: 0 1px 12px rgba(242, 237, 224, 0.55);
+  text-shadow: 0 1px 14px rgba(242, 237, 224, 0.75);
 }
 body.night #caption { text-shadow: 0 1px 14px rgba(8, 10, 20, 0.7); }
-#caption.show { opacity: 0.94; transform: none; }
+#caption.show { opacity: 1; transform: none; }
 
 #whisper {
   position: fixed; left: 0; right: 0; bottom: 11vh; z-index: 20;
   text-align: center; font-size: clamp(0.95rem, 3.8vw, 1.1rem);
-  color: var(--ink); opacity: 0; padding: 0 3rem; pointer-events: none;
+  color: var(--ink); opacity: 0; padding: 0.35rem 3rem; pointer-events: none;
   transition: opacity 1.4s ease, color 1.2s ease;
+  text-shadow: 0 1px 10px rgba(242, 237, 224, 0.55);
+  background: radial-gradient(ellipse 60% 100% at 50% 50%, rgba(242, 237, 224, 0.5), rgba(242, 237, 224, 0));
 }
-#whisper.show { opacity: 0.66; }
+#whisper.show { opacity: 1; }
+body.night #whisper {
+  text-shadow: 0 1px 10px rgba(8, 10, 20, 0.65);
+  background: radial-gradient(ellipse 60% 100% at 50% 50%, rgba(16, 20, 42, 0.38), rgba(16, 20, 42, 0));
+}
 
 /* dock */
 #dock {
