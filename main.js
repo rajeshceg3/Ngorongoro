@@ -183,16 +183,16 @@ for (let i = 0; i < 42; i++) {
 const maasaiMat = new THREE.MeshBasicMaterial({ color: "#a03c30", transparent: true, opacity: 0.85, side: THREE.DoubleSide });
 const maasai = new THREE.Group();
 {
-  const spots = [[-26, 4.05], [-24.2, 4.15], [-22.6, 4.1]];
+  const spots = [[-6.6, 4.05], [-4.9, 4.15], [-3.3, 4.1]];
   for (const [x, y] of spots) {
     const g = new THREE.Group();
-    const body = new THREE.Mesh(new THREE.PlaneGeometry(0.28, 1.0), maasaiMat);
+    const body = new THREE.Mesh(new THREE.PlaneGeometry(0.36, 1.3), maasaiMat);
     g.add(body);
-    const head = new THREE.Mesh(new THREE.CircleGeometry(0.13, 10), maasaiMat);
-    head.position.y = 0.62;
+    const head = new THREE.Mesh(new THREE.CircleGeometry(0.17, 10), maasaiMat);
+    head.position.y = 0.8;
     g.add(head);
-    const spear = new THREE.Mesh(new THREE.PlaneGeometry(0.05, 1.5), maasaiMat);
-    spear.position.set(0.22, 0.25, 0);
+    const spear = new THREE.Mesh(new THREE.PlaneGeometry(0.07, 1.9), maasaiMat);
+    spear.position.set(0.28, 0.3, 0);
     g.add(spear);
     g.position.set(x, y, -41);
     maasai.add(g);
@@ -202,8 +202,8 @@ scene.add(maasai);
 
 /* cooking-fire glow on the rim at night */
 const fireMat = new THREE.MeshBasicMaterial({ color: "#ffb45e", transparent: true, opacity: 0 });
-const fire = new THREE.Mesh(new THREE.CircleGeometry(0.32, 14), fireMat);
-fire.position.set(-24.4, 3.35, -40.8);
+const fire = new THREE.Mesh(new THREE.CircleGeometry(0.55, 14), fireMat);
+fire.position.set(-5.6, 3.5, -40.8);
 scene.add(fire);
 
 /* stars */
