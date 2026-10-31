@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ngorongoro</title>
+<meta name="description" content="A quiet journey into the Ngorongoro Crater - the rim, the animal floor, the flamingo lake, and the Maasai night.">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M4 10 Q16 26 28 10 L28 28 L4 28 Z' fill='%237c9159'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;1,400;1,500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js" } }
+</script>
+</head>
+<body>
+<canvas id="crater" aria-label="A living scene of the Ngorongoro Crater. Drag slowly to drift."></canvas>
+
+<div id="veil" aria-hidden="true">
+  <h1 class="wordmark">Ngorongoro</h1>
+</div>
+
+<header id="masthead" class="chrome" aria-hidden="true">
+  <span class="wordmark-small">Ngorongoro</span>
+</header>
+
+<p id="caption" class="chrome" role="status"></p>
+<p id="whisper" class="chrome"></p>
+
+<nav id="dock" class="chrome" aria-label="Faces of the crater">
+  <button class="dot" data-scene="0" aria-label="The crater rim at dawn"><i></i><span>Rim</span></button>
+  <button class="dot" data-scene="1" aria-label="The animal floor"><i></i><span>Floor</span></button>
+  <button class="dot" data-scene="2" aria-label="The flamingo lake"><i></i><span>Lake</span></button>
+  <button class="dot" data-scene="3" aria-label="The Maasai night on the rim"><i></i><span>Night</span></button>
+</nav>
+
+<script type="module" src="main.js"></script>
+</body>
+</html>
