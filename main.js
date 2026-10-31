@@ -321,6 +321,7 @@ dock.addEventListener("pointerup", (e) => {
   dockSwiping = false;
 });
 dock.addEventListener("pointercancel", () => { dockPointerId = null; dockSwiping = false; });
+addEventListener("pointercancel", (e) => { if (dockPointer === e.pointerId) dockPointer = null; });
 dock.addEventListener("click", (e) => {
   if (suppressDockClick) { e.preventDefault(); e.stopPropagation(); suppressDockClick = false; }
 }, true);
@@ -338,14 +339,20 @@ dock.addEventListener("keydown", (e) => {
 
 /* ---------- pointer ---------- */
 let px = 0, py = 0, dragging = false, moved = 0, downX = 0, downY = 0;
-addEventListener("pointerdown", (e) => { dragging = true; moved = 0; downX = e.clientX; downY = e.clientY; wakeChrome(); });
+let dockPointer = null;
+addEventListener("pointerdown", (e) => {
+  dragging = true; moved = 0; downX = e.clientX; downY = e.clientY; wakeChrome();
+  dockPointer = e.target.closest && e.target.closest("#dock") ? e.pointerId : null;
+});
 addEventListener("pointermove", (e) => {
   if (dragging) { moved += Math.abs(e.clientX - downX) + Math.abs(e.clientY - downY); }
+  if (dockPointer === e.pointerId) return; // dock swipes never move the scene
   px = (e.clientX / innerWidth) * 2 - 1;
   py = (e.clientY / innerHeight) * 2 - 1;
 });
 addEventListener("pointerup", (e) => {
   dragging = false;
+  if (dockPointer === e.pointerId) dockPointer = null;
   if (moved < 12 && chapter === 2 && e.clientY > innerHeight * 0.4 && e.clientY < innerHeight * 0.86) {
     const v = new THREE.Vector3((e.clientX / innerWidth) * 2 - 1, -((e.clientY / innerHeight) * 2 - 1), 0.5).unproject(camera);
     const dir = v.sub(camera.position).normalize();
