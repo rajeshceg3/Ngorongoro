@@ -241,7 +241,7 @@ const CHAPTERS = [
   { skyTop: "#fdeef0", skyBot: "#f9dbe0", fog: ["#f9dbe0", 0.012], wall: "#cbb7a0", slope: "#a8b08e", ground: "#98a578",
     water: 0.95, waterC: "#f2a7b8", trees: 0.3, treesC: "#5f7a52", animals: 0, flams: 1, maasai: 0, fire: 0,
     stars: 0, motes: ["#ffffff", 0.22], night: false,
-    caption: "A lake blushing with flamingos.", whisper: "The water answers every touch." },
+    caption: "A lake blushing with flamingos.", whisper: "The flamingos lend it their colour." },
   { skyTop: "#0d1226", skyBot: "#233052", fog: ["#1b2340", 0.028], wall: "#232c4e", slope: "#1d2542", ground: "#161c33",
     water: 0.18, waterC: "#3a3050", trees: 0.45, treesC: "#141a30", animals: 0, flams: 0, maasai: 0.9, fire: 1,
     stars: 1, motes: ["#d8d2c0", 0.4], night: true,
