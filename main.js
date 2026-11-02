@@ -40,9 +40,14 @@ function resize() {
   camera.aspect = w / h;
   camera.position.z = camera.aspect < 0.75 ? 13.5 : 10;
   camera.updateProjectionMatrix();
-  /* keep the big animals inside the visible band at any aspect */
+  layoutAnimals();
+}
+/* keep the big animals inside the visible band at any aspect: 2.05 covers
+   the widest animal's extent, +0.95 for the pointer-parallax pan and slack.
+   Runs at build time too - the first resize() fires before animals exist */
+function layoutAnimals() {
   const halfW = Math.tan((55 * Math.PI) / 360) * (camera.position.z + 18) * camera.aspect;
-  const spread = Math.min(1, Math.max(0.55, (halfW - 2.2) / 7.5));
+  const spread = Math.min(1, Math.max(0.55, (halfW - 3.0) / 7.5));
   for (const a of animalList) a.g.position.x = a.baseX * spread;
 }
 addEventListener("resize", resize); resize();
@@ -173,6 +178,7 @@ elephant(-2.5, -2.7, 0.85);
   animalList.push({ g: r, phase: 2.2, baseX: 7.5 });
 }
 scene.add(animals);
+layoutAnimals();
 
 /* distant herds: loose speck clusters that give the floor its numbers */
 const herdMat = new THREE.MeshBasicMaterial({ color: "#4a3f30", transparent: true, opacity: 0 });
