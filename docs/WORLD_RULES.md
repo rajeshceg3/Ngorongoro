@@ -63,3 +63,17 @@ re-synced from here during that world's improvement round.
     production after merge. Keep a repeatable verification harness per world.
 14. Every world update report carries the final production URL and honest
     below-bar notes.
+
+## Shared vocabulary
+
+15. **Concise keys carry the whole bar.** A short key from the world owner -
+    the default being "build a world for [place]" - invokes this rulebook end
+    to end. Every accumulated principle applies without re-asking settled
+    design choices; a key is a complete brief, not an opening question.
+16. **Named keys are separate recipes.** An alternate named key preserves its
+    own standing recipe rather than a variation on this one; keep each key's
+    accumulated corrections with that key, and keep owner-specific corrections
+    distinct from general design law.
+17. **Examples are not requests.** A place named while explaining a key is
+    illustration, not a build order. (Mombasa was named as such an example on
+    2026-11-03; it is not a queued world.)
