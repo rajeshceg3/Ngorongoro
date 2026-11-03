@@ -306,7 +306,10 @@ function setChapter(i) {
   target.fire = c.fire; target.stars = c.stars; target.motesO = c.motes[1];
   target.wallY = c.wallY; target.herds = c.herds;
   document.body.classList.toggle("night", c.night);
-  dots.forEach((d, j) => d.classList.toggle("active", j === i));
+  dots.forEach((d, j) => {
+    d.classList.toggle("active", j === i);
+    if (j === i) d.setAttribute("aria-current", "true"); else d.removeAttribute("aria-current");
+  });
   caption.classList.remove("show"); whisper.classList.remove("show");
   clearTimeout(whisperTimer);
   clearInterval(lakeCueTimer);
@@ -463,6 +466,7 @@ tick();
 setTimeout(() => {
   veil.classList.add("gone");
   dots[0].classList.add("active");
+  dots[0].setAttribute("aria-current", "true");
   caption.textContent = CHAPTERS[0].caption;
   setTimeout(() => caption.classList.add("show"), 900);
   whisper.textContent = CHAPTERS[0].whisper;
