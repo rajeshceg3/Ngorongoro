@@ -23,6 +23,8 @@ const lerp = (a, b, t) => a + (b - a) * t;
 const lerpColor = (c, target, t) => { c.r = lerp(c.r, target.r, t); c.g = lerp(c.g, target.g, t); c.b = lerp(c.b, target.b, t); };
 const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+const animalList = []; // hoisted: resize() reads it before the animals are built
+
 /* ---------- renderer ---------- */
 const canvas = document.getElementById("crater");
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false });
@@ -38,6 +40,15 @@ function resize() {
   camera.aspect = w / h;
   camera.position.z = camera.aspect < 0.75 ? 13.5 : 10;
   camera.updateProjectionMatrix();
+  layoutAnimals();
+}
+/* keep the big animals inside the visible band at any aspect: 2.05 covers
+   the widest animal's extent, +0.95 for the pointer-parallax pan and slack.
+   Runs at build time too - the first resize() fires before animals exist */
+function layoutAnimals() {
+  const halfW = Math.tan((55 * Math.PI) / 360) * (camera.position.z + 18) * camera.aspect;
+  const spread = Math.min(1, Math.max(0.55, (halfW - 3.0) / 7.5));
+  for (const a of animalList) a.g.position.x = a.baseX * spread;
 }
 addEventListener("resize", resize); resize();
 
@@ -118,7 +129,6 @@ scene.add(trees);
 /* elephants + rhino silhouettes */
 const animalMat = new THREE.MeshBasicMaterial({ color: "#5c4a3a", transparent: true, opacity: 0.18, side: THREE.DoubleSide });
 const animals = new THREE.Group();
-const animalList = [];
 function elephant(x, y, s) {
   const g = new THREE.Group();
   const body = new THREE.Mesh(new THREE.CircleGeometry(1.15, 16), animalMat);
@@ -142,7 +152,7 @@ function elephant(x, y, s) {
   g.position.set(x, y, -18);
   g.scale.setScalar(s);
   animals.add(g);
-  animalList.push({ g, phase: Math.random() * 6.28 });
+  animalList.push({ g, phase: Math.random() * 6.28, baseX: x });
 }
 elephant(-7.5, -2.3, 1.15);
 elephant(-2.5, -2.7, 0.85);
@@ -165,9 +175,23 @@ elephant(-2.5, -2.7, 0.85);
   }
   r.position.set(7.5, -2.8, -18);
   animals.add(r);
-  animalList.push({ g: r, phase: 2.2 });
+  animalList.push({ g: r, phase: 2.2, baseX: 7.5 });
 }
 scene.add(animals);
+layoutAnimals();
+
+/* distant herds: loose speck clusters that give the floor its numbers */
+const herdMat = new THREE.MeshBasicMaterial({ color: "#4a3f30", transparent: true, opacity: 0 });
+const herdList = [];
+for (const [cx, cy] of [[-16, -1.0], [-3, -1.45], [11, -1.15]]) {
+  const n = 5 + Math.floor(Math.random() * 3);
+  for (let i = 0; i < n; i++) {
+    const m = new THREE.Mesh(new THREE.CircleGeometry(0.09, 6), herdMat);
+    m.position.set(cx + (Math.random() - 0.5) * 4.5, cy + (Math.random() - 0.5) * 0.5, -30);
+    scene.add(m);
+    herdList.push({ m, phase: Math.random() * 6.28 });
+  }
+}
 
 /* flamingos: a drift of pink specks over the lake */
 const flamMat = new THREE.MeshBasicMaterial({ color: "#e85f83", transparent: true, opacity: 0, side: THREE.DoubleSide });
@@ -232,19 +256,19 @@ scene.add(motes);
 const CHAPTERS = [
   { skyTop: "#ffe3c2", skyBot: "#f5cfa5", fog: ["#f5cfa5", 0.015], wall: "#b08c64", slope: "#8fa06a", ground: "#7c9159",
     water: 0.12, waterC: "#e8b8a0", trees: 0.25, treesC: "#3f6b40", animals: 0.18, flams: 0, maasai: 0.85, fire: 0,
-    stars: 0, motes: ["#fff2dc", 0.3], night: false,
+    stars: 0, motes: ["#fff2dc", 0.3], night: false, wallY: 0, herds: 0,
     caption: "A whole Eden, held in one crater.", whisper: "Six hundred metres down, the world begins again." },
   { skyTop: "#eaf4ec", skyBot: "#d4ead2", fog: ["#d4ead2", 0.014], wall: "#9ab27e", slope: "#86ad66", ground: "#74a057",
     water: 0, waterC: "#d4ead2", trees: 1, treesC: "#3c6b40", animals: 1, flams: 0, maasai: 0, fire: 0,
-    stars: 0, motes: ["#f4ffef", 0.35], night: false,
-    caption: "Twenty-five thousand animals share one bowl.", whisper: "Lions, rhinos, elephants - all neighbours." },
+    stars: 0, motes: ["#f4ffef", 0.35], night: false, wallY: 2.4, herds: 0.55,
+    caption: "Twenty-five thousand animals share one bowl.", whisper: "Hooves, dust, grass - the bowl feeds them all." },
   { skyTop: "#fdeef0", skyBot: "#f9dbe0", fog: ["#f9dbe0", 0.012], wall: "#cbb7a0", slope: "#a8b08e", ground: "#98a578",
     water: 0.95, waterC: "#f2a7b8", trees: 0.3, treesC: "#5f7a52", animals: 0, flams: 1, maasai: 0, fire: 0,
-    stars: 0, motes: ["#ffffff", 0.22], night: false,
-    caption: "A lake blushing with flamingos.", whisper: "The water answers every touch." },
+    stars: 0, motes: ["#ffffff", 0.22], night: false, wallY: 0.6, herds: 0,
+    caption: "A lake blushing with flamingos.", whisper: "They feed with their heads upside down." },
   { skyTop: "#0d1226", skyBot: "#233052", fog: ["#1b2340", 0.028], wall: "#232c4e", slope: "#1d2542", ground: "#161c33",
     water: 0.18, waterC: "#3a3050", trees: 0.45, treesC: "#141a30", animals: 0, flams: 0, maasai: 0.9, fire: 1,
-    stars: 1, motes: ["#d8d2c0", 0.4], night: true,
+    stars: 1, motes: ["#d8d2c0", 0.4], night: true, wallY: 1.2, herds: 0,
     caption: "The Maasai still walk the rim.", whisper: "Herds first, as it has always been." },
 ];
 let chapter = 0;
@@ -255,7 +279,7 @@ const target = {
   waterC: new THREE.Color(CHAPTERS[0].waterC), treesC: new THREE.Color(CHAPTERS[0].treesC),
   motes: new THREE.Color(CHAPTERS[0].motes[0]),
   fogN: CHAPTERS[0].fog[1], water: 0.12, trees: 0.25, animals: 0.18, flams: 0,
-  maasai: 0.85, fire: 0, stars: 0, motesO: 0.3,
+  maasai: 0.85, fire: 0, stars: 0, motesO: 0.3, wallY: 0, herds: 0,
 };
 
 /* ---------- chrome ---------- */
@@ -280,6 +304,7 @@ function setChapter(i) {
   target.fogN = c.fog[1]; target.water = c.water; target.trees = c.trees;
   target.animals = c.animals; target.flams = c.flams; target.maasai = c.maasai;
   target.fire = c.fire; target.stars = c.stars; target.motesO = c.motes[1];
+  target.wallY = c.wallY; target.herds = c.herds;
   document.body.classList.toggle("night", c.night);
   dots.forEach((d, j) => d.classList.toggle("active", j === i));
   caption.classList.remove("show"); whisper.classList.remove("show");
@@ -392,12 +417,21 @@ function tick() {
   maasaiMat.opacity = lerp(maasaiMat.opacity, target.maasai, k);
   starMat.opacity = lerp(starMat.opacity, target.stars, k);
   moteMat.opacity = lerp(moteMat.opacity, target.motesO, k);
+  herdMat.opacity = lerp(herdMat.opacity, target.herds, k);
+  wall.position.y = lerp(wall.position.y, target.wallY, k);
+  /* snap to target when close, so faint remnants (e.g. the red shukas) truly vanish */
+  const snap = (mat, to) => { if (Math.abs(mat.opacity - to) < 0.02) mat.opacity = to; };
+  snap(waterMat, target.water); snap(treesMat, target.trees); snap(animalMat, target.animals);
+  snap(flamMat, target.flams); snap(maasaiMat, target.maasai); snap(starMat, target.stars);
+  snap(moteMat, target.motesO); snap(herdMat, target.herds);
+  if (Math.abs(wall.position.y - target.wallY) < 0.02) wall.position.y = target.wallY;
   fireMat.opacity = lerp(fireMat.opacity, target.fire * (reduceMotion ? 0.75 : 0.6 + Math.sin(t * 5.2) * 0.25 + Math.sin(t * 9.7) * 0.15), k);
 
   if (!reduceMotion) {
     for (const tr of treeList) tr.g.rotation.z = Math.sin(t * 0.6 + tr.phase) * 0.015;
     for (const a of animalList) a.g.rotation.z = Math.sin(t * 0.5 + a.phase) * 0.01;
     for (const f of flams) f.m.position.y += Math.sin(t * 1.3 + f.phase) * f.amp * dt * 3;
+    for (const h of herdList) h.m.position.y += Math.sin(t * 0.4 + h.phase) * dt * 0.02;
   }
 
   if (!reduceMotion) {
