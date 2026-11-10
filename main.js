@@ -325,6 +325,7 @@ dots.forEach((d, i) => d.addEventListener("click", () => setChapter(i)));
 
 /* ---------- dock gestures: swipe to change face, arrows to step ---------- */
 const dock = document.getElementById("dock");
+dock.addEventListener("focusin", wakeChrome);
 let dockDownX = 0, dockDownY = 0, dockSwiping = false, dockPointerId = null, suppressDockClick = false;
 dock.addEventListener("pointerdown", (e) => {
   dockDownX = e.clientX; dockDownY = e.clientY; dockSwiping = false; dockPointerId = e.pointerId;

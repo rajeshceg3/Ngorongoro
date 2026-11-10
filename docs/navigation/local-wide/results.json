@@ -1,0 +1,46 @@
+[
+  {
+    "width": 844,
+    "height": 390,
+    "motion": "reduce",
+    "fourScenes": true,
+    "noTextOverlap": true,
+    "allLabelsVisible": true,
+    "tapTargets44": true,
+    "idleNavigation": true,
+    "keyboard": true
+  },
+  {
+    "width": 844,
+    "height": 390,
+    "motion": "no-preference",
+    "fourScenes": true,
+    "noTextOverlap": true,
+    "allLabelsVisible": true,
+    "tapTargets44": true,
+    "idleNavigation": true,
+    "keyboard": true
+  },
+  {
+    "width": 1320,
+    "height": 844,
+    "motion": "reduce",
+    "fourScenes": true,
+    "noTextOverlap": true,
+    "allLabelsVisible": true,
+    "tapTargets44": true,
+    "idleNavigation": true,
+    "keyboard": true
+  },
+  {
+    "width": 1320,
+    "height": 844,
+    "motion": "no-preference",
+    "fourScenes": true,
+    "noTextOverlap": true,
+    "allLabelsVisible": true,
+    "tapTargets44": true,
+    "idleNavigation": true,
+    "keyboard": true
+  }
+]
