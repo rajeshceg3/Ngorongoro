@@ -1,0 +1,450 @@
+[
+ {
+  "w": 1440,
+  "ch": 0,
+  "selector": "#caption",
+  "corePixels": 340,
+  "worstContrast": 11.087,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 0,
+  "selector": "#whisper",
+  "corePixels": 46,
+  "worstContrast": 11.087,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 0,
+  "selector": ".wordmark-small",
+  "corePixels": 69,
+  "worstContrast": 11.463,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 0,
+  "selector": "[data-scene=\"0\"] span",
+  "corePixels": 14,
+  "worstContrast": 11.661,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 0,
+  "selector": "[data-scene=\"1\"] span",
+  "corePixels": 25,
+  "worstContrast": 7.125,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 0,
+  "selector": "[data-scene=\"2\"] span",
+  "corePixels": 31,
+  "worstContrast": 7.014,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 0,
+  "selector": "[data-scene=\"3\"] span",
+  "corePixels": 10,
+  "worstContrast": 6.786,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 1,
+  "selector": "#caption",
+  "corePixels": 498,
+  "worstContrast": 11.356,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 1,
+  "selector": "#whisper",
+  "corePixels": 29,
+  "worstContrast": 11.356,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 1,
+  "selector": ".wordmark-small",
+  "corePixels": 69,
+  "worstContrast": 11.474,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 1,
+  "selector": "[data-scene=\"0\"] span",
+  "corePixels": 11,
+  "worstContrast": 7.352,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 1,
+  "selector": "[data-scene=\"1\"] span",
+  "corePixels": 27,
+  "worstContrast": 11.872,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 1,
+  "selector": "[data-scene=\"2\"] span",
+  "corePixels": 31,
+  "worstContrast": 7.309,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 1,
+  "selector": "[data-scene=\"3\"] span",
+  "corePixels": 9,
+  "worstContrast": 7.299,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 2,
+  "selector": "#caption",
+  "corePixels": 395,
+  "worstContrast": 11.174,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 2,
+  "selector": "#whisper",
+  "corePixels": 35,
+  "worstContrast": 11.174,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 2,
+  "selector": ".wordmark-small",
+  "corePixels": 69,
+  "worstContrast": 11.519,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 2,
+  "selector": "[data-scene=\"0\"] span",
+  "corePixels": 11,
+  "worstContrast": 7.128,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 2,
+  "selector": "[data-scene=\"1\"] span",
+  "corePixels": 25,
+  "worstContrast": 7.24,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 2,
+  "selector": "[data-scene=\"2\"] span",
+  "corePixels": 32,
+  "worstContrast": 11.577,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 2,
+  "selector": "[data-scene=\"3\"] span",
+  "corePixels": 9,
+  "worstContrast": 7.024,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 3,
+  "selector": "#caption",
+  "corePixels": 357,
+  "worstContrast": 13.296,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 3,
+  "selector": "#whisper",
+  "corePixels": 36,
+  "worstContrast": 13.379,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 3,
+  "selector": ".wordmark-small",
+  "corePixels": 76,
+  "worstContrast": 13.517,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 3,
+  "selector": "[data-scene=\"0\"] span",
+  "corePixels": 14,
+  "worstContrast": 9.755,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 3,
+  "selector": "[data-scene=\"1\"] span",
+  "corePixels": 27,
+  "worstContrast": 9.883,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 3,
+  "selector": "[data-scene=\"2\"] span",
+  "corePixels": 31,
+  "worstContrast": 10.064,
+  "pass": true
+ },
+ {
+  "w": 1440,
+  "ch": 3,
+  "selector": "[data-scene=\"3\"] span",
+  "corePixels": 10,
+  "worstContrast": 13.305,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 0,
+  "selector": "#caption",
+  "corePixels": 954,
+  "worstContrast": 11.087,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 0,
+  "selector": "#whisper",
+  "corePixels": 766,
+  "worstContrast": 11.109,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 0,
+  "selector": ".wordmark-small",
+  "corePixels": 584,
+  "worstContrast": 11.456,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 0,
+  "selector": "[data-scene=\"0\"] span",
+  "corePixels": 170,
+  "worstContrast": 11.577,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 0,
+  "selector": "[data-scene=\"1\"] span",
+  "corePixels": 204,
+  "worstContrast": 6.919,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 0,
+  "selector": "[data-scene=\"2\"] span",
+  "corePixels": 211,
+  "worstContrast": 6.842,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 0,
+  "selector": "[data-scene=\"3\"] span",
+  "corePixels": 230,
+  "worstContrast": 6.934,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 1,
+  "selector": "#caption",
+  "corePixels": 1426,
+  "worstContrast": 11.356,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 1,
+  "selector": "#whisper",
+  "corePixels": 535,
+  "worstContrast": 11.356,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 1,
+  "selector": ".wordmark-small",
+  "corePixels": 584,
+  "worstContrast": 11.37,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 1,
+  "selector": "[data-scene=\"0\"] span",
+  "corePixels": 152,
+  "worstContrast": 7.254,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 1,
+  "selector": "[data-scene=\"1\"] span",
+  "corePixels": 208,
+  "worstContrast": 11.577,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 1,
+  "selector": "[data-scene=\"2\"] span",
+  "corePixels": 211,
+  "worstContrast": 7.179,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 1,
+  "selector": "[data-scene=\"3\"] span",
+  "corePixels": 230,
+  "worstContrast": 7.205,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 2,
+  "selector": "#caption",
+  "corePixels": 1081,
+  "worstContrast": 11.174,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 2,
+  "selector": "#whisper",
+  "corePixels": 568,
+  "worstContrast": 11.174,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 2,
+  "selector": ".wordmark-small",
+  "corePixels": 584,
+  "worstContrast": 11.415,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 2,
+  "selector": "[data-scene=\"0\"] span",
+  "corePixels": 152,
+  "worstContrast": 7.043,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 2,
+  "selector": "[data-scene=\"1\"] span",
+  "corePixels": 204,
+  "worstContrast": 6.959,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 2,
+  "selector": "[data-scene=\"2\"] span",
+  "corePixels": 215,
+  "worstContrast": 11.577,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 2,
+  "selector": "[data-scene=\"3\"] span",
+  "corePixels": 230,
+  "worstContrast": 7.001,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 3,
+  "selector": "#caption",
+  "corePixels": 991,
+  "worstContrast": 13.296,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 3,
+  "selector": "#whisper",
+  "corePixels": 457,
+  "worstContrast": 13.332,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 3,
+  "selector": ".wordmark-small",
+  "corePixels": 595,
+  "worstContrast": 13.554,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 3,
+  "selector": "[data-scene=\"0\"] span",
+  "corePixels": 170,
+  "worstContrast": 9.853,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 3,
+  "selector": "[data-scene=\"1\"] span",
+  "corePixels": 208,
+  "worstContrast": 9.778,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 3,
+  "selector": "[data-scene=\"2\"] span",
+  "corePixels": 215,
+  "worstContrast": 9.778,
+  "pass": true
+ },
+ {
+  "w": 390,
+  "ch": 3,
+  "selector": "[data-scene=\"3\"] span",
+  "corePixels": 234,
+  "worstContrast": 13.305,
+  "pass": true
+ }
+]

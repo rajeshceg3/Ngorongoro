@@ -12,11 +12,12 @@ function vnoise(x, z) {
   const s = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453;
   return s - Math.floor(s);
 }
-function fbm(x, z) {
-  return vnoise(Math.floor(x), Math.floor(z)) * 0.6 +
-         vnoise(Math.floor(x * 2.7), Math.floor(z * 2.7)) * 0.3 +
-         vnoise(Math.floor(x * 6.1), Math.floor(z * 6.1)) * 0.1;
+function coherentNoise(x,z) {
+  const ix=Math.floor(x), iz=Math.floor(z);
+  const fx=x-ix, fz=z-iz, u=fx*fx*(3-2*fx), v=fz*fz*(3-2*fz);
+  return lerp(lerp(vnoise(ix,iz),vnoise(ix+1,iz),u),lerp(vnoise(ix,iz+1),vnoise(ix+1,iz+1),u),v);
 }
+function fbm(x,z) { return coherentNoise(x,z)*.6+coherentNoise(x*2.7,z*2.7)*.3+coherentNoise(x*6.1,z*6.1)*.1; }
 
 /* ---------- renderer ---------- */
 const canvas = document.getElementById("crater");
@@ -44,7 +45,7 @@ const rimLight = new THREE.DirectionalLight(0xfff2dd, 0.55);
 rimLight.position.set(-40, 25, 40);
 scene.add(rimLight);
 const fireLight = new THREE.PointLight(0xff9a3c, 0, 26, 1.8);
-fireLight.position.set(24.8, 2.4, 20.4);
+fireLight.position.set(31, 2.4, 32.4);
 scene.add(fireLight);
 
 /* ---------- sky dome + sun/moon ---------- */
@@ -85,7 +86,8 @@ function groundH(x, z) {
   const ridge = fbm(x * 0.08, z * 0.08) * 4.2 * smooth(FLOOR_R - 4, RIM_R, r);
   const lakeBasin = smooth(17, 22, r); /* flat bed under Lake Magadi */
   const floorN = (fbm(x * 0.22 + 9, z * 0.22) - 0.5) * 0.55 * (1 - smooth(FLOOR_R - 8, FLOOR_R, r)) * lakeBasin;
-  return rim * 15 + ridge + floorN;
+  const h = rim * 15 + ridge + floorN;
+  return lerp(h,7.8,1-smooth(3,6,Math.hypot(x-31,z-32.4)));
 }
 const terrain = (() => {
   const R = 150, N = 210;
@@ -107,10 +109,9 @@ const terrain = (() => {
     colors[i * 3] = c.r * shade; colors[i * 3 + 1] = c.g * shade; colors[i * 3 + 2] = c.b * shade;
   }
   g.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-  const nonIdx = g.toNonIndexed();
-  nonIdx.computeVertexNormals();
-  const m = new THREE.Mesh(nonIdx, new THREE.MeshStandardMaterial({
-    vertexColors: true, flatShading: true, roughness: 1, metalness: 0,
+  g.computeVertexNormals();
+  const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({
+    vertexColors: true, flatShading: false, roughness: 1, metalness: 0,
   }));
   scene.add(m);
   return m;
@@ -118,7 +119,23 @@ const terrain = (() => {
 
 /* Lake Magadi: shallow soda disc, pink when the flamingos are home */
 const lakeMat = new THREE.MeshStandardMaterial({ color: "#9fc4c2", roughness: 0.3, metalness: 0.05, flatShading: true });
-const lake = new THREE.Mesh(new THREE.CircleGeometry(11, 40), lakeMat);
+const lakeGeometry = new THREE.CircleGeometry(11,96);
+for(let i=1;i<lakeGeometry.attributes.position.count;i++) {
+  const x=lakeGeometry.attributes.position.getX(i),y=lakeGeometry.attributes.position.getY(i);
+  const a=Math.atan2(y,x),scale=1+.075*Math.sin(a*3+.5)+.04*Math.sin(a*7);
+  lakeGeometry.attributes.position.setXY(i,x*scale,y*scale);
+}
+const lakeTime = {value:0};
+lakeMat.onBeforeCompile = shader => {
+  shader.uniforms.lakeTime=lakeTime;
+  shader.vertexShader='varying vec3 lakePoint;\n'+shader.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\n lakePoint=position;');
+  shader.fragmentShader='uniform float lakeTime; varying vec3 lakePoint;\n'+shader.fragmentShader.replace('#include <color_fragment>',`#include <color_fragment>
+    float w=sin(lakePoint.x*4.0+sin(lakePoint.y*1.2+lakeTime*.3)*.8)+sin(lakePoint.y*7.0-lakeTime*.5);
+    diffuseColor.rgb *= .94 + .06*sin(lakePoint.y*2.0+lakePoint.x*.2);
+    diffuseColor.rgb += vec3(.10,.11,.10)*smoothstep(1.78,1.98,w);
+  `);
+};
+const lake = new THREE.Mesh(lakeGeometry, lakeMat);
 lake.rotation.x = -Math.PI / 2;
 lake.position.set(0, 0.12, 0);
 lake.scale.set(1.25, 1, 0.8);
@@ -159,39 +176,43 @@ scene.add(trees);
 const animalRoot = new THREE.Group();
 scene.add(animalRoot);
 const hidelist = []; // {obj, key} faded per chapter
-const hide = (obj, key) => hidelist.push({ obj, key });
+const hide = (obj, key) => { if(!hidelist.some(h=>h.obj===obj)) hidelist.push({obj,key}); obj.depthWrite=false; };
 
-const eleMat = new THREE.MeshStandardMaterial({ color: "#9a8874", flatShading: true, roughness: 1, transparent: true });
-const eleDark = new THREE.MeshStandardMaterial({ color: "#7a6a58", flatShading: true, roughness: 1, transparent: true });
+const eleMat = new THREE.MeshStandardMaterial({ color: "#9a8874", flatShading: false, roughness: 1, transparent: true });
+const eleDark = new THREE.MeshStandardMaterial({ color: "#7a6a58", flatShading: false, roughness: 1, transparent: true });
 const tuskMat = new THREE.MeshStandardMaterial({ color: "#e8ddc4", flatShading: true, roughness: 0.7, transparent: true });
 const elephants = [];
 function elephant(x, z, s, yaw) {
   const g = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.SphereGeometry(1.5, 8, 6), eleMat);
-  body.scale.set(1.35, 1.0, 0.95); body.position.y = 1.9; g.add(body);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.85, 7, 6), eleMat);
+  const body = new THREE.Mesh(new THREE.SphereGeometry(1.5, 24, 16), eleMat);
+  body.scale.set(1.45, 0.85, 0.78); body.position.y = 1.9; g.add(body);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.85, 20, 16), eleMat);
   head.position.set(1.9, 2.15, 0); g.add(head);
   const ears = [];
   for (const side of [-1, 1]) {
-    const ear = new THREE.Mesh(new THREE.SphereGeometry(0.62, 6, 5), eleDark);
-    ear.scale.set(0.28, 1, 0.85); ear.position.set(1.55, 2.3, side * 0.78);
-    g.add(ear); ears.push(ear);
+    const ear = new THREE.Mesh(new THREE.SphereGeometry(0.85, 20, 16), eleDark);
+    ear.scale.set(0.20, 1.08, 0.80); ear.position.set(1.55, 2.3, side * 0.78);
+    ear.rotation.y = side * 0.8; g.add(ear); ears.push(ear);
   }
-  const trunkSegs = [];
-  let px = 2.45, py = 1.85;
-  for (let i = 0; i < 3; i++) {
-    const seg = new THREE.Mesh(new THREE.CylinderGeometry(0.16 - i * 0.035, 0.2 - i * 0.035, 0.75, 5), eleMat);
-    seg.position.set(px, py, 0); seg.rotation.z = 0.35 + i * 0.28;
-    g.add(seg); trunkSegs.push(seg);
-    px += 0.22; py -= 0.62;
+  const eyeMat = new THREE.MeshStandardMaterial({color:0x171916,roughness:.4,transparent:true});
+  for(const side of [-1,1]) {
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(.055,10,8),eyeMat);
+    eye.position.set(2.32,2.38,side*.61); g.add(eye);
   }
+  hide(eyeMat,"animals");
+  const trunkCurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(2.45,2.05,0), new THREE.Vector3(2.70,1.30,0),
+    new THREE.Vector3(2.70,.52,0),new THREE.Vector3(2.95,.28,0),new THREE.Vector3(3.15,.52,0)
+  ]);
+  const trunk = new THREE.Mesh(new THREE.TubeGeometry(trunkCurve,24,.15,10,false),eleMat);
+  g.add(trunk);
   for (const side of [-1, 1]) {
     const tusk = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.7, 5), tuskMat);
     tusk.position.set(2.35, 1.45, side * 0.3); tusk.rotation.z = -1.9;
     g.add(tusk);
   }
   for (const [lx, lz] of [[-0.9, 0.55], [-0.9, -0.55], [0.9, 0.55], [0.9, -0.55]]) {
-    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 1.5, 6), eleDark);
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 1.5, 12), eleDark);
     leg.position.set(lx, 0.75, lz); g.add(leg);
   }
   const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.03, 1.0, 4), eleDark);
@@ -199,13 +220,13 @@ function elephant(x, z, s, yaw) {
   g.position.set(x, groundH(x, z), z);
   g.rotation.y = yaw; g.scale.setScalar(s);
   animalRoot.add(g);
-  elephants.push({ g, ears, trunkSegs, tail, phase: vnoise(x, z) * 6.28, baseY: g.position.y });
+  elephants.push({ g, ears, trunk, tail, phase: vnoise(x, z) * 6.28, baseY: g.position.y });
   hide(eleMat, "animals"); hide(eleDark, "animals"); hide(tuskMat, "animals");
   return g;
 }
-elephant(-9.5, -9.5, 1.12, 0.9);
-elephant(-12, 0.5, 0.85, 1.2);
-elephant(6, -7, 0.62, -1.2);
+elephant(-9.5, -9.5, 0.95, 0.25);
+elephant(-18, -4, 0.7, -0.2);
+elephant(-6, -13, 0.45, 0.3);
 
 const rhinoMat = new THREE.MeshStandardMaterial({ color: "#a39a8b", flatShading: true, roughness: 1, transparent: true });
 const rhinos = [];
@@ -279,7 +300,7 @@ const maasaiMat = new THREE.MeshStandardMaterial({ color: "#b03428", flatShading
 const skinMat = new THREE.MeshStandardMaterial({ color: "#3d2c22", flatShading: true, roughness: 1, transparent: true });
 const maasai = new THREE.Group();
 {
-  const spots = [[24.5, 19.5, 2.4], [26.2, 21.2, 2.9], [23, 21.5, 1.9]];
+  const spots = [[30.5, 31.5, 2.4], [32.2, 33.2, 2.9], [29, 33.5, 1.9]];
   for (const [x, z, yaw] of spots) {
     const g = new THREE.Group();
     const shuka = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.3, 1.35, 6), maasaiMat);
@@ -293,12 +314,18 @@ const maasai = new THREE.Group();
   }
   const fire = new THREE.Mesh(new THREE.ConeGeometry(0.42, 0.9, 6),
     new THREE.MeshStandardMaterial({ color: "#ff9a3c", emissive: "#ff7a1c", emissiveIntensity: 1.6, flatShading: true, transparent: true }));
-  fire.position.set(24.8, groundH(24.8, 20.4) + 0.45, 20.4);
+  fire.position.set(31, groundH(31, 32.4) + 0.45, 32.4);
   maasai.add(fire);
   maasai.userData.fire = fire;
+  const glowCanvas=document.createElement('canvas'); glowCanvas.width=glowCanvas.height=128;
+  const gc=glowCanvas.getContext('2d'), grad=gc.createRadialGradient(64,64,0,64,64,64);
+  grad.addColorStop(0,'rgba(255,165,55,.7)');grad.addColorStop(.3,'rgba(255,115,30,.25)');grad.addColorStop(1,'rgba(255,90,20,0)');gc.fillStyle=grad;gc.fillRect(0,0,128,128);
+  const glow=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(glowCanvas),color:0xffbc69,transparent:true,depthWrite:false,blending:THREE.AdditiveBlending}));
+  glow.position.copy(fire.position);glow.position.y+=.3;glow.scale.set(3.2,3.2,1);maasai.add(glow); hide(glow.material,'fire');
+
 }
 scene.add(maasai);
-fireLight.position.set(24.8, groundH(24.8, 20.4) + 2.4, 20.4);
+fireLight.position.set(31, groundH(31, 32.4) + 2.4, 32.4);
 hide(maasaiMat, "maasai"); hide(skinMat, "maasai");
 
 /* birds: slow circling v-pairs */
@@ -321,15 +348,15 @@ const CHAPTERS = [
   { skyTop: "#7fb2dd", skyMid: "#ffe3c2", skyBot: "#f5cfa5", fog: ["#f2cf9f", 0.005],
     hemiSky: "#ffe0bb", hemiGnd: "#8a7a5a", hemiI: 0.9, sunC: "#ffd9a0", sunI: 1.6, sunPos: [60, 18, -30],
     sunDisc: ["#fff2cf", 0.95], moon: 0, stars: 0,
-    water: "#9fc4c2", animals: 0, herds: 0, flams: 0, maasai: 1, fire: 0, birds: 0.75,
-    view: { pos: [-26, 17, -13], yaw: -1.88, pitch: -0.26 },
+    water: "#9fc4c2", animals: 1, herds: 1, flams: 0, maasai: 0, fire: 0, birds: 0.75,
+    view: { pos: [-58, 45, -36], yaw: -2.14, pitch: -0.57 },
     night: false,
     caption: "A whole Eden, held in one crater.", whisper: "Six hundred metres down, the world begins again." },
   { skyTop: "#8fc3e8", skyMid: "#eaf4ec", skyBot: "#d4ead2", fog: ["#cfe4c4", 0.0046],
     hemiSky: "#eaf4ec", hemiGnd: "#7d9463", hemiI: 1.0, sunC: "#fff3da", sunI: 1.75, sunPos: [30, 70, 20],
     sunDisc: ["#fff8e2", 0.85], moon: 0, stars: 0,
     water: "#9fc4c2", animals: 1, herds: 1, flams: 0, maasai: 0, fire: 0, birds: 0.75,
-    view: { pos: [2, 2.6, 10], yaw: 0.52, pitch: -0.06 },
+    view: { pos: [3, 3.8, 18], yaw: 0.43, pitch: -0.045 },
     night: false,
     caption: "Twenty-five thousand animals share one bowl.", whisper: "Hooves, dust, grass - the bowl feeds them all." },
   { skyTop: "#a9c8e0", skyMid: "#fdeef0", skyBot: "#f9dbe0", fog: ["#f2d4d8", 0.0044],
@@ -343,7 +370,7 @@ const CHAPTERS = [
     hemiSky: "#2a3455", hemiGnd: "#0c1020", hemiI: 0.55, sunC: "#93a7d8", sunI: 0.35, sunPos: [-50, 60, 40],
     sunDisc: ["#fff2cf", 0], moon: 0.9, stars: 1,
     water: "#2c3350", animals: 0, herds: 0, flams: 0, maasai: 1, fire: 1, birds: 0,
-    view: { pos: [-24, 13.8, -11.5], yaw: -2.7, pitch: -0.14 },
+    view: { pos: [24, 13, 44], yaw: -0.53, pitch: -0.24 },
     night: true,
     caption: "The Maasai still walk the rim.", whisper: "Herds first, as it has always been." },
 ];
@@ -356,7 +383,7 @@ const cur = {
   water: new THREE.Color(CHAPTERS[0].water),
   fogN: CHAPTERS[0].fog[1], hemiI: CHAPTERS[0].hemiI, sunI: CHAPTERS[0].sunI,
   sunDiscO: CHAPTERS[0].sunDisc[1], moon: 0, stars: 0,
-  animals: 0, herds: 0, flams: 0, maasai: 1, fire: 0, birds: 0.75,
+  animals: 1, herds: 1, flams: 0, maasai: 0, fire: 0, birds: 0.75,
   pos: new THREE.Vector3(...CHAPTERS[0].view.pos),
   sunPos: new THREE.Vector3(...CHAPTERS[0].sunPos),
 };
@@ -371,6 +398,7 @@ want.sunC = new THREE.Color(CHAPTERS[0].sunC); want.sunDiscC = new THREE.Color(C
 want.water = new THREE.Color(CHAPTERS[0].water);
 want.fogN = CHAPTERS[0].fog[1];
 want.sunDiscO = CHAPTERS[0].sunDisc[1];
+for (const {obj,key} of hidelist) obj.opacity=want[key];
 
 /* ---------- camera rig: drag to look around, unbounded azimuth ---------- */
 const rig = {
@@ -392,7 +420,7 @@ canvas.addEventListener("pointermove", (e) => {
   lastX = e.clientX; lastY = e.clientY;
   moved += Math.abs(dx) + Math.abs(dy);
   rig.yaw -= dx * 0.0042;
-  rig.pitch = Math.min(0.35, Math.max(-0.3, rig.pitch - dy * 0.0026));
+  rig.pitch = Math.min(0.35, Math.max(-0.8, rig.pitch - dy * 0.0026));
   rig.yawV = -dx * 0.0042 / 1.0;
   rig.pitchV = -dy * 0.0026;
   maybeShowReset();
@@ -410,7 +438,7 @@ function maybeShowReset() {
   resetOrb.hidden = !off;
 }
 let resetting = false;
-resetOrb.addEventListener("click", () => { resetting = true; wakeChrome(); });
+resetOrb.addEventListener("click", () => { resetting = true; rig.yawV = 0; rig.pitchV = 0; wakeChrome(); });
 
 /* ---------- chapter switching ---------- */
 let chapter = 0;
@@ -553,20 +581,22 @@ audioOrb.addEventListener("click", () => {
 /* ---------- loop ---------- */
 const clock = new THREE.Clock();
 function tick() {
-  const dt = Math.min(clock.getDelta(), 0.05);
+  const rawDt = clock.getDelta();
+  const dt = Math.min(rawDt, 0.05);
   const t = clock.elapsedTime;
-  const k = 1 - Math.exp(-1.6 * dt);
+  lakeTime.value = reduceMotion ? 0 : t;
+  const k = 1 - Math.exp(-1.6 * Math.min(rawDt,1));
 
   /* look-around inertia (Windermere ease), skipped under reduced motion */
   if (!dragging && !resetting) {
     if (!reduceMotion) {
-      rig.yaw += rig.yawV; rig.pitch = Math.min(0.35, Math.max(-0.3, rig.pitch + rig.pitchV));
+      rig.yaw += rig.yawV; rig.pitch = Math.min(0.35, Math.max(-0.8, rig.pitch + rig.pitchV));
       rig.yawV *= Math.exp(-3.4 * dt); rig.pitchV *= Math.exp(-3.4 * dt);
       if (Math.abs(rig.yawV) > 0.0004 || Math.abs(rig.pitchV) > 0.0004) maybeShowReset();
     } else { rig.yawV = 0; rig.pitchV = 0; }
   }
   if (resetting) {
-    const rk = 1 - Math.exp(-4.5 * dt);
+    const rk = 1 - Math.exp(-4.5 * Math.min(rawDt,1));
     rig.yaw += angDiff(rig.entryYaw, rig.yaw) * rk;
     rig.pitch = lerp(rig.pitch, rig.entryPitch, rk);
     if (Math.abs(angDiff(rig.entryYaw, rig.yaw)) < 0.004 && Math.abs(rig.pitch - rig.entryPitch) < 0.004) {
@@ -578,6 +608,7 @@ function tick() {
   camera.rotation.set(0, 0, 0);
   camera.rotateY(rig.yaw);
   camera.rotateX(rig.pitch);
+  canvas.dataset.yaw=rig.yaw.toFixed(4); canvas.dataset.pitch=rig.pitch.toFixed(4);
 
   /* palette + lights */
   lerpColor(skyMat.uniforms.top.value, want.skyTop, k);
@@ -611,7 +642,7 @@ function tick() {
       e.g.rotation.y += Math.sin(t * 0.11 + e.phase) * 0.0004;
       e.ears[0].rotation.x = Math.sin(t * 1.7 + e.phase) * 0.16;
       e.ears[1].rotation.x = -Math.sin(t * 1.7 + e.phase + 0.5) * 0.16;
-      e.trunkSegs[2].rotation.z = 0.91 + Math.sin(t * 0.9 + e.phase) * 0.1;
+      e.trunk.rotation.z = Math.sin(t * 0.9 + e.phase) * 0.025;
       e.tail.rotation.x = Math.sin(t * 2.1 + e.phase) * 0.3;
     }
     for (const r of rhinos) r.g.rotation.y += Math.sin(t * 0.13 + r.phase) * 0.0003;
