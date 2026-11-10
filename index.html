@@ -15,7 +15,7 @@
 </script>
 </head>
 <body>
-<canvas id="crater" aria-label="A living scene of the Ngorongoro Crater. Drag slowly to drift."></canvas>
+<canvas id="crater" aria-label="A living scene of the Ngorongoro Crater. Drag slowly to look around."></canvas>
 
 <div id="veil" aria-hidden="true">
   <h1 class="wordmark">Ngorongoro</h1>
@@ -24,6 +24,15 @@
 <header id="masthead" class="chrome" aria-hidden="true">
   <span class="wordmark-small">Ngorongoro</span>
 </header>
+
+<div id="orbs">
+  <button id="audio-orb" class="orb" aria-pressed="false" aria-label="Crater sounds, off">
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path class="spk" d="M4 9v6h4l5 4V5L8 9H4z" fill="currentColor"/><path class="wav" d="M16 9c1.2 1 1.2 5 0 6" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round"/></svg>
+  </button>
+  <button id="reset-orb" class="orb" hidden aria-label="Return to this view">
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><circle cx="12" cy="12" r="6.2" stroke="currentColor" stroke-width="1.6" fill="none"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/></svg>
+  </button>
+</div>
 
 <div id="journey-text">
 <p id="caption" class="chrome" role="status"></p>
