@@ -542,7 +542,7 @@ audioOrb.addEventListener("click", () => {
     const ctx = new (window.AudioContext || window.webkitAudioContext)();
     audio = { ctx, engine: buildAudio(ctx), on: false };
   }
-  audio.ctx.resume();
+  audio.ctx.resume().then(() => { audioOrb.dataset.ctxState = audio.ctx.state; });
   audio.on = !audio.on;
   if (audio.on) audio.engine.start(); else audio.engine.stop();
   audioOrb.setAttribute("aria-pressed", String(audio.on));
