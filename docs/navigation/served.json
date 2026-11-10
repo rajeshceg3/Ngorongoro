@@ -1,0 +1,14 @@
+[
+  {
+    "url": "https://ngorongoro-crater.vercel.app/index.html",
+    "sha256": "2b43fd711aa2736d6cfba6edf6af1c1ffb4f6f598b00597cba5cc4063aa7e3ed"
+  },
+  {
+    "url": "https://ngorongoro-crater.vercel.app/styles.css",
+    "sha256": "ad1695a61125b3c054da07a3392346cec41096bb9c8c566f9fed57697462cfb6"
+  },
+  {
+    "url": "https://ngorongoro-crater.vercel.app/main.js",
+    "sha256": "56b8054b59348dcc976651be9be34062574280f590521b9773c7341e18a4dec1"
+  }
+]
