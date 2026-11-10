@@ -164,3 +164,12 @@ body.night .orb {
 #audio-orb[aria-pressed="true"] .wav { opacity: 1; }
 #reset-orb[hidden] { display: none; }
 @media (prefers-reduced-motion:reduce) { .orb { transition: none; } }
+
+/* A bounded reading surface: no scene-spanning caption bands. */
+#journey-text { left:50%; right:auto; transform:translateX(-50%); width:min(92vw,42rem); border-radius:1rem; padding:.65rem .6rem; background:rgba(242,237,224,.96); }
+#caption,#whisper { background:none; text-shadow:none; padding:.15rem .65rem; }
+body.night #journey-text { background:rgba(16,20,42,.96); }
+body.night #caption,body.night #whisper { background:none; text-shadow:none; }
+
+.wordmark-small { display:inline-block; background:rgba(242,237,224,.96); padding:.35rem .55rem; border-radius:.5rem; opacity:1; text-shadow:none; }
+body.night .wordmark-small { background:rgba(16,20,42,.96); text-shadow:none; }
