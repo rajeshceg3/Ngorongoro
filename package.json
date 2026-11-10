@@ -1,0 +1,1 @@
+{"name":"ngorongoro","private":true,"scripts":{"test":"node --check main.js && node tests/navigation.cjs"},"devDependencies":{"playwright":"1.58.2"}}

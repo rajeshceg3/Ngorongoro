@@ -1,0 +1,18 @@
+name: Scene navigation
+on: [push, pull_request]
+jobs:
+  journey:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        viewports: ['[[320,568],[390,844]]', '[[844,390],[1320,844]]']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: |
+          python3 -m http.server 8785 >/tmp/server.log 2>&1 &
+          CHROME_PATH=/usr/bin/google-chrome VIEWPORTS='${{ matrix.viewports }}' npm test

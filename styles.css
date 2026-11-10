@@ -118,3 +118,18 @@ body.night .dot.active { background: rgba(236, 231, 218, 0.14); }
   outline: 2px solid var(--ink);
   outline-offset: 3px;
 }
+
+/* Reachable scene navigation: stable labels and a separate text stack. */
+:root { --dock-bottom: max(1rem, env(safe-area-inset-bottom)); }
+#journey-text { position:fixed; left:0; right:0; bottom:calc(var(--dock-bottom) + 4.5rem + 1rem); z-index:20; pointer-events:none; display:grid; gap:.25rem; }
+#caption, #whisper { position:static; margin:0; }
+#dock { bottom:var(--dock-bottom); min-height:4.5rem; padding:.5rem; gap:.25rem; background:rgba(242,237,224,.88); }
+body.night #dock { background:rgba(16,20,42,.9); }
+.dot { min-width:3.5rem; min-height:3.5rem; justify-content:center; }
+.dot span { opacity:.85; max-height:none; font-size:.85rem; }
+.dot.active { background:var(--ink); }
+.dot.active span { color:var(--paper); opacity:1; max-height:none; }
+.dot.active i { background:var(--paper); }
+body.night .dot.active { background:var(--ink); }
+@media (max-height:450px) { #journey-text { bottom:calc(var(--dock-bottom) + 4.5rem + .5rem); } #caption { font-size:1.2rem; } #whisper { font-size:.95rem; padding:.15rem 1.5rem; } }
+@media (prefers-reduced-motion:reduce) { .chrome,#caption,#whisper,#dock,.dot,.dot i,.dot span { transition:none; } }
