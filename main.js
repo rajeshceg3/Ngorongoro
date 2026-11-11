@@ -147,6 +147,7 @@ scene.add(lake);
 const trees = new THREE.Group();
 const trunkMat = new THREE.MeshStandardMaterial({ color: "#d8c690", flatShading: true, roughness: 1 });
 const canopyMat = new THREE.MeshStandardMaterial({ color: "#5c7a3f", flatShading: true, roughness: 1 });
+const canopyLightMat = new THREE.MeshStandardMaterial({ color: "#6f8c4a", flatShading: true, roughness: 1 });
 function acacia(x, z, s) {
   const g = new THREE.Group();
   const y = groundH(x, z);
@@ -154,13 +155,16 @@ function acacia(x, z, s) {
   trunk.position.y = 1.3 * s;
   trunk.rotation.z = (vnoise(x, z) - 0.5) * 0.16;
   g.add(trunk);
-  const canopy = new THREE.Mesh(new THREE.SphereGeometry(1.9 * s, 7, 4), canopyMat);
-  canopy.scale.y = 0.28;
-  canopy.position.y = 2.7 * s;
+  const canopy = new THREE.Mesh(new THREE.SphereGeometry(2.6 * s, 9, 5), canopyMat);
+  canopy.scale.y = 0.16;
+  canopy.position.y = 2.75 * s;
   g.add(canopy);
-  const canopy2 = new THREE.Mesh(new THREE.SphereGeometry(1.2 * s, 6, 4), canopyMat);
-  canopy2.scale.y = 0.3; canopy2.position.set(0.9 * s, 2.2 * s, 0.4 * s);
+  const canopy2 = new THREE.Mesh(new THREE.SphereGeometry(1.7 * s, 8, 4), canopyLightMat);
+  canopy2.scale.y = 0.2; canopy2.position.set(1.1 * s, 2.35 * s, 0.45 * s);
   g.add(canopy2);
+  const canopy3 = new THREE.Mesh(new THREE.SphereGeometry(1.3 * s, 7, 4), canopyMat);
+  canopy3.scale.y = 0.22; canopy3.position.set(-1.0 * s, 2.4 * s, -0.5 * s);
+  g.add(canopy3);
   g.position.set(x, y, z);
   g.rotation.y = vnoise(z, x) * 6.28;
   trees.add(g);
@@ -180,45 +184,75 @@ scene.add(animalRoot);
 const hidelist = []; // {obj, key} faded per chapter
 const hide = (obj, key) => { if(!hidelist.some(h=>h.obj===obj)) hidelist.push({obj,key}); obj.depthWrite=false; };
 
-const eleMat = new THREE.MeshStandardMaterial({ color: "#9a8874", flatShading: false, roughness: 1, transparent: true });
-const eleDark = new THREE.MeshStandardMaterial({ color: "#7a6a58", flatShading: false, roughness: 1, transparent: true });
-const tuskMat = new THREE.MeshStandardMaterial({ color: "#e8ddc4", flatShading: true, roughness: 0.7, transparent: true });
+const eleMat = new THREE.MeshStandardMaterial({ color: "#8f8478", flatShading: false, roughness: 0.95, transparent: true });
+const eleDark = new THREE.MeshStandardMaterial({ color: "#7c7266", flatShading: false, roughness: 1, transparent: true });
+const tuskMat = new THREE.MeshStandardMaterial({ color: "#e9dfc8", flatShading: false, roughness: 0.55, transparent: true });
+const shadowTex = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 128;
+  const ctx = c.getContext('2d');
+  const g = ctx.createRadialGradient(64,64,8,64,64,64);
+  g.addColorStop(0,'rgba(20,18,12,0.42)'); g.addColorStop(0.7,'rgba(20,18,12,0.18)'); g.addColorStop(1,'rgba(20,18,12,0)');
+  ctx.fillStyle = g; ctx.fillRect(0,0,128,128);
+  const t = new THREE.CanvasTexture(c); return t;
+})();
+function contactShadow(g, rx, rz, y=0.03) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(rx*2, rz*2),
+    new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false }));
+  m.rotation.x = -Math.PI/2; m.position.y = y; m.renderOrder = 1; g.add(m);
+}
 const elephants = [];
 function elephant(x, z, s, yaw) {
   const g = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.SphereGeometry(1.5, 24, 16), eleMat);
-  body.scale.set(1.45, 0.85, 0.78); body.position.y = 1.9; g.add(body);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.85, 20, 16), eleMat);
-  head.position.set(1.9, 2.15, 0); g.add(head);
+  // columnar legs first (belly clears ground by ~1.55 units at s=1)
+  for (const [lx, lz, r] of [[-1.0, 0.58, 0.30], [-1.0, -0.58, 0.30], [1.05, 0.60, 0.26], [1.05, -0.60, 0.26]]) {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(r, r*1.12, 1.85, 14), eleDark);
+    leg.position.set(lx, 0.92, lz); g.add(leg);
+    const foot = new THREE.Mesh(new THREE.CylinderGeometry(r*1.15, r*1.2, 0.18, 14), eleDark);
+    foot.position.set(lx, 0.09, lz); g.add(foot);
+  }
+  // barrel body
+  const body = new THREE.Mesh(new THREE.SphereGeometry(1.5, 28, 20), eleMat);
+  body.scale.set(1.5, 1.02, 0.92); body.position.y = 2.5; g.add(body);
+  // shoulder hump + sloping back
+  const hump = new THREE.Mesh(new THREE.SphereGeometry(0.85, 20, 14), eleMat);
+  hump.position.set(0.95, 3.15, 0); g.add(hump);
+  const rump = new THREE.Mesh(new THREE.SphereGeometry(0.9, 20, 14), eleMat);
+  rump.scale.set(1.0, 0.9, 0.85); rump.position.set(-1.5, 2.55, 0); g.add(rump);
+  // large head with sloped forehead
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.95, 24, 18), eleMat);
+  head.scale.set(1.12, 1.05, 0.88); head.position.set(2.15, 2.7, 0); g.add(head);
+  // big African ears
   const ears = [];
   for (const side of [-1, 1]) {
-    const ear = new THREE.Mesh(new THREE.SphereGeometry(0.85, 20, 16), eleDark);
-    ear.scale.set(0.20, 1.08, 0.80); ear.position.set(1.55, 2.3, side * 0.78);
-    ear.rotation.y = side * 0.8; g.add(ear); ears.push(ear);
+    const ear = new THREE.Mesh(new THREE.SphereGeometry(1.0, 22, 16), eleDark);
+    ear.scale.set(0.16, 1.25, 0.95); ear.position.set(1.75, 2.85, side * 0.92);
+    ear.rotation.y = side * 0.85; ear.rotation.x = side * -0.12; g.add(ear); ears.push(ear);
   }
   const eyeMat = new THREE.MeshStandardMaterial({color:0x171916,roughness:.4,transparent:true});
   for(const side of [-1,1]) {
-    const eye = new THREE.Mesh(new THREE.SphereGeometry(.055,10,8),eyeMat);
-    eye.position.set(2.32,2.38,side*.61); g.add(eye);
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(.07,10,8),eyeMat);
+    eye.position.set(2.75,2.9,side*.55); g.add(eye);
   }
   hide(eyeMat,"animals");
+  // trunk: from head, hanging to the ground with a gentle forward curl
   const trunkCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(2.45,2.05,0), new THREE.Vector3(2.70,1.30,0),
-    new THREE.Vector3(2.70,.52,0),new THREE.Vector3(2.95,.28,0),new THREE.Vector3(3.15,.52,0)
+    new THREE.Vector3(2.95,2.45,0), new THREE.Vector3(3.25,1.75,0),
+    new THREE.Vector3(3.3,0.9,0), new THREE.Vector3(3.2,0.35,0), new THREE.Vector3(3.45,0.12,0)
   ]);
-  const trunk = new THREE.Mesh(new THREE.TubeGeometry(trunkCurve,24,.15,10,false),eleMat);
+  const trunk = new THREE.Mesh(new THREE.TubeGeometry(trunkCurve,28,.17,10,false),eleMat);
   g.add(trunk);
+  // tusks: curved forward-down
   for (const side of [-1, 1]) {
-    const tusk = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.7, 5), tuskMat);
-    tusk.position.set(2.35, 1.45, side * 0.3); tusk.rotation.z = -1.9;
+    const tusk = new THREE.Mesh(new THREE.ConeGeometry(0.09, 1.0, 8), tuskMat);
+    tusk.position.set(2.8, 1.95, side * 0.3); tusk.rotation.z = -2.15; tusk.rotation.y = side * 0.25;
     g.add(tusk);
   }
-  for (const [lx, lz] of [[-0.9, 0.55], [-0.9, -0.55], [0.9, 0.55], [0.9, -0.55]]) {
-    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.24, 0.28, 1.5, 12), eleDark);
-    leg.position.set(lx, 0.75, lz); g.add(leg);
-  }
-  const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.03, 1.0, 4), eleDark);
-  tail.position.set(-2.0, 1.7, 0); tail.rotation.z = 0.5; g.add(tail);
+  // tail with tuft
+  const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.035, 1.3, 6), eleDark);
+  tail.position.set(-2.35, 2.0, 0); tail.rotation.z = 0.35; g.add(tail);
+  const tuft = new THREE.Mesh(new THREE.SphereGeometry(0.09, 8, 6), new THREE.MeshStandardMaterial({color:"#4a4038",roughness:1,transparent:true}));
+  tuft.position.set(-2.6, 1.4, 0); g.add(tuft);
+  contactShadow(g, 2.9, 1.5);
   g.position.set(x, groundH(x, z), z);
   g.rotation.y = yaw; g.scale.setScalar(s);
   animalRoot.add(g);
@@ -230,72 +264,155 @@ elephant(-9.5, -9.5, 0.95, 0.25);
 elephant(-18, -4, 0.7, -0.2);
 elephant(-6, -13, 0.45, 0.3);
 
-const rhinoMat = new THREE.MeshStandardMaterial({ color: "#a39a8b", flatShading: true, roughness: 1, transparent: true });
+const rhinoMat = new THREE.MeshStandardMaterial({ color: "#8d8478", flatShading: false, roughness: 1, transparent: true });
+const rhinoDark = new THREE.MeshStandardMaterial({ color: "#776e62", flatShading: false, roughness: 1, transparent: true });
 const rhinos = [];
 {
   const g = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.SphereGeometry(1.2, 8, 6), rhinoMat);
-  body.scale.set(1.45, 0.9, 0.85); body.position.y = 1.35; g.add(body);
-  const head = new THREE.Mesh(new THREE.BoxGeometry(0.9, 0.62, 0.6), rhinoMat);
-  head.position.set(1.75, 1.15, 0); g.add(head);
-  const horn = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.55, 5), tuskMat);
-  horn.position.set(2.2, 1.5, 0); horn.rotation.z = -0.5; g.add(horn);
-  for (const [lx, lz] of [[-0.75, 0.45], [-0.75, -0.45], [0.75, 0.45], [0.75, -0.45]]) {
-    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.16, 0.19, 1.0, 5), rhinoMat);
-    leg.position.set(lx, 0.5, lz); g.add(leg);
+  // massive barrel, shoulder hump, thick folded legs
+  const body = new THREE.Mesh(new THREE.SphereGeometry(1.35, 24, 18), rhinoMat);
+  body.scale.set(1.55, 1.05, 0.98); body.position.y = 1.75; g.add(body);
+  const hump = new THREE.Mesh(new THREE.SphereGeometry(0.8, 18, 12), rhinoMat);
+  hump.scale.set(1.1, 0.75, 0.95); hump.position.set(0.75, 2.5, 0); g.add(hump);
+  const rump = new THREE.Mesh(new THREE.SphereGeometry(0.95, 18, 12), rhinoMat);
+  rump.scale.set(1.0, 0.92, 0.9); rump.position.set(-1.5, 1.8, 0); g.add(rump);
+  // long low head held down
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.62, 18, 12), rhinoMat);
+  head.scale.set(1.5, 0.85, 0.72); head.position.set(2.2, 1.25, 0); g.add(head);
+  const snout = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.42, 0.7, 12), rhinoDark);
+  snout.position.set(2.95, 1.05, 0); snout.rotation.z = -1.25; g.add(snout);
+  // two horns
+  const horn1 = new THREE.Mesh(new THREE.ConeGeometry(0.13, 0.75, 8), tuskMat);
+  horn1.position.set(3.15, 1.55, 0); horn1.rotation.z = -0.35; g.add(horn1);
+  const horn2 = new THREE.Mesh(new THREE.ConeGeometry(0.09, 0.4, 8), tuskMat);
+  horn2.position.set(2.75, 1.62, 0); horn2.rotation.z = -0.2; g.add(horn2);
+  // ears
+  for (const side of [-1, 1]) {
+    const ear = new THREE.Mesh(new THREE.ConeGeometry(0.14, 0.35, 6), rhinoDark);
+    ear.position.set(1.75, 1.85, side * 0.35); ear.rotation.x = side * 0.4; g.add(ear);
   }
+  // thick column legs with fold rings
+  for (const [lx, lz] of [[-1.15, 0.62], [-1.15, -0.62], [1.15, 0.62], [1.15, -0.62]]) {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.34, 1.35, 12), rhinoMat);
+    leg.position.set(lx, 0.67, lz); g.add(leg);
+    const fold = new THREE.Mesh(new THREE.TorusGeometry(0.32, 0.045, 6, 14), rhinoDark);
+    fold.position.set(lx, 1.15, lz); fold.rotation.x = Math.PI/2; g.add(fold);
+  }
+  const eyeMat2 = new THREE.MeshStandardMaterial({color:0x171916,roughness:.4,transparent:true});
+  for(const side of [-1,1]) {
+    const eye = new THREE.Mesh(new THREE.SphereGeometry(.06,10,8),eyeMat2);
+    eye.position.set(2.35,1.5,side*.42); g.add(eye);
+  }
+  contactShadow(g, 2.6, 1.3);
   g.position.set(9, groundH(9, 6), 6); g.rotation.y = -2.1;
   animalRoot.add(g); rhinos.push({ g, phase: 1.7 });
-  hide(rhinoMat, "animals");
+  hide(rhinoMat, "animals"); hide(rhinoDark, "animals");
 }
 
 /* wildebeest herds: small dark grazers with horns, spread over the floor */
-const herdMat = new THREE.MeshStandardMaterial({ color: "#655648", flatShading: true, roughness: 1, transparent: true });
-const herdMat2 = new THREE.MeshStandardMaterial({ color: "#7a6a55", flatShading: true, roughness: 1, transparent: true });
+const herdMat = new THREE.MeshStandardMaterial({ color: "#5d5148", flatShading: false, roughness: 1, transparent: true });
+const herdMat2 = new THREE.MeshStandardMaterial({ color: "#6e6152", flatShading: false, roughness: 1, transparent: true });
+const herdDark = new THREE.MeshStandardMaterial({ color: "#3e362f", flatShading: false, roughness: 1, transparent: true });
 const herds = [];
 for (let i = 0; i < 26; i++) {
   const a = vnoise(i, 3) * 6.28, r = 16 + vnoise(i, 7) * 16;
   const x = Math.cos(a) * r, z = Math.sin(a) * r;
   const hm = i % 2 ? herdMat2 : herdMat;
   const g = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.BoxGeometry(0.75, 0.5, 0.34), hm);
-  body.position.y = 0.62; g.add(body);
-  const head = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.3, 0.24), hm);
-  head.position.set(0.48, 0.72, 0); g.add(head);
-  for (const [lx, lz] of [[-0.25, 0.1], [-0.25, -0.1], [0.25, 0.1], [0.25, -0.1]]) {
-    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.05, 0.5, 4), hm);
-    leg.position.set(lx, 0.25, lz); g.add(leg);
+  // sloped body: high shoulders, low rump
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.42, 14, 10), hm);
+  body.scale.set(1.5, 0.95, 0.7); body.position.y = 0.78; g.add(body);
+  const shoulders = new THREE.Mesh(new THREE.SphereGeometry(0.3, 12, 8), hm);
+  shoulders.position.set(0.35, 0.95, 0); g.add(shoulders);
+  // horse-like head with muzzle + beard
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.17, 10, 8), hm);
+  head.scale.set(1.5, 1.0, 0.8); head.position.set(0.62, 0.88, 0); g.add(head);
+  const muzzle = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.1, 0.22, 8), herdDark);
+  muzzle.position.set(0.82, 0.8, 0); muzzle.rotation.z = -1.2; g.add(muzzle);
+  const beard = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.18, 6), herdDark);
+  beard.position.set(0.68, 0.68, 0); beard.rotation.z = Math.PI; g.add(beard);
+  // curved horns
+  for (const side of [-1, 1]) {
+    const horn = new THREE.Mesh(new THREE.TorusGeometry(0.09, 0.025, 5, 8, 2.6), herdDark);
+    horn.position.set(0.55, 1.02, side * 0.1); horn.rotation.y = side * 0.9; g.add(horn);
   }
+  // thin legs, dark
+  for (const [lx, lz] of [[-0.3, 0.14], [-0.3, -0.14], [0.32, 0.14], [0.32, -0.14]]) {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.04, 0.62, 6), herdDark);
+    leg.position.set(lx, 0.31, lz); g.add(leg);
+  }
+  // dark mane stripe + tail
+  const mane = new THREE.Mesh(new THREE.BoxGeometry(0.5, 0.08, 0.06), herdDark);
+  mane.position.set(0.25, 1.08, 0); g.add(mane);
+  const tail = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.015, 0.4, 4), herdDark);
+  tail.position.set(-0.58, 0.7, 0); tail.rotation.z = 0.4; g.add(tail);
+  const sc = 0.85 + vnoise(i, 43) * 0.4;
+  g.scale.setScalar(sc);
   g.position.set(x, groundH(x, z), z);
   g.rotation.y = vnoise(i, 11) * 6.28;
   animalRoot.add(g);
   herds.push({ g, phase: vnoise(i, 17) * 6.28, baseY: g.position.y });
 }
-hide(herdMat, "herds"); hide(herdMat2, "herds");
+hide(herdMat, "herds"); hide(herdMat2, "herds"); hide(herdDark, "herds");
 
 /* flamingos at the soda lake */
-const flamMat = new THREE.MeshStandardMaterial({ color: "#e87f9a", flatShading: true, roughness: 1, transparent: true });
+const flamMat = new THREE.MeshStandardMaterial({ color: "#f2a0b4", flatShading: false, roughness: 0.9, transparent: true });
+const flamWingMat = new THREE.MeshStandardMaterial({ color: "#e05f7e", flatShading: false, roughness: 0.9, transparent: true });
+const flamPaleMat = new THREE.MeshStandardMaterial({ color: "#f7ccd4", flatShading: false, roughness: 0.9, transparent: true });
+const flamLegMat = new THREE.MeshStandardMaterial({ color: "#d96a7a", flatShading: false, roughness: 0.9, transparent: true });
+const beakMat = new THREE.MeshStandardMaterial({ color: "#f3e9e4", roughness: 0.7, transparent: true });
+const beakTipMat = new THREE.MeshStandardMaterial({ color: "#2b2126", roughness: 0.7, transparent: true });
 const flams = [];
-for (let i = 0; i < 14; i++) {
-  const a = vnoise(i, 23) * 6.28, r = 4 + vnoise(i, 29) * 8;
-  const x = Math.cos(a) * r * 1.2, z = Math.sin(a) * r * 0.75;
+function flamingo(x, z, yaw, s) {
   const g = new THREE.Group();
-  const body = new THREE.Mesh(new THREE.SphereGeometry(0.22, 6, 5), flamMat);
-  body.scale.set(1.4, 1, 1); body.position.y = 0.72; g.add(body);
-  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.045, 0.55, 4), flamMat);
-  neck.position.set(0.3, 1.05, 0); neck.rotation.z = -0.35; g.add(neck);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.08, 5, 4), flamMat);
-  head.position.set(0.42, 1.32, 0); g.add(head);
+  // two-segment legs (backward-bending ankle is the mid joint)
   for (const side of [-1, 1]) {
-    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 0.6, 3), flamMat);
-    leg.position.set(0, 0.3, side * 0.05); g.add(leg);
+    const lower = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 0.5, 5), flamLegMat);
+    lower.position.set(0, 0.25, side * 0.06); g.add(lower);
+    const upper = new THREE.Mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.45, 5), flamLegMat);
+    upper.position.set(0, 0.68, side * 0.06); g.add(upper);
   }
+  // teardrop body, tail up-tilted
+  const body = new THREE.Mesh(new THREE.SphereGeometry(0.3, 20, 14), flamMat);
+  body.scale.set(1.6, 1.05, 0.88); body.position.y = 1.05; g.add(body);
+  const tail = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.35, 8), flamWingMat);
+  tail.position.set(-0.42, 1.12, 0); tail.rotation.z = 1.9; g.add(tail);
+  // folded wings: deeper pink, black flight-feather edge
+  for (const side of [-1, 1]) {
+    const wing = new THREE.Mesh(new THREE.SphereGeometry(0.26, 16, 12), flamWingMat);
+    wing.scale.set(1.25, 0.55, 0.35); wing.position.set(-0.06, 1.12, side * 0.17);
+    g.add(wing);
+    const edge = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 8), beakTipMat);
+    edge.scale.set(0.9, 0.28, 0.2); edge.position.set(-0.28, 1.1, side * 0.2);
+    g.add(edge);
+  }
+  // S-curved neck
+  const neckCurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(0.3, 1.02, 0), new THREE.Vector3(0.56, 1.45, 0),
+    new THREE.Vector3(0.48, 1.8, 0), new THREE.Vector3(0.62, 2.02, 0), new THREE.Vector3(0.72, 2.06, 0)
+  ]);
+  const neck = new THREE.Mesh(new THREE.TubeGeometry(neckCurve, 24, 0.058, 8, false), flamMat);
+  g.add(neck);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), flamPaleMat);
+  head.position.set(0.76, 2.06, 0); g.add(head);
+  // bent beak: pale base, black down-turned tip
+  const beak = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.18, 8), beakMat);
+  beak.position.set(0.88, 2.05, 0); beak.rotation.z = -1.35; g.add(beak);
+  const tip = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.12, 8), beakTipMat);
+  tip.position.set(0.97, 1.98, 0); tip.rotation.z = -2.2; g.add(tip);
+  contactShadow(g, 0.55, 0.4, 0.05);
   g.position.set(x, 0.1, z);
-  g.rotation.y = vnoise(i, 31) * 6.28;
+  g.rotation.y = yaw; g.scale.setScalar(s);
   scene.add(g);
-  flams.push({ g, neck, head, phase: vnoise(i, 37) * 6.28 });
+  flams.push({ g, neck, head, phase: vnoise(x, z) * 6.28 });
 }
-hide(flamMat, "flams");
+for (let i = 0; i < 14; i++) {
+  const a = vnoise(i, 23) * 6.28, r = 8 + vnoise(i, 29) * 5;
+  const fx = Math.cos(a) * r * 1.2, fz = Math.sin(a) * r * 0.75;
+  if (Math.hypot(fx - 16, fz - 2) < 7.5) continue; /* keep the flock clear of the Lake camera */
+  flamingo(fx, fz, vnoise(i, 31) * 6.28, 0.85 + vnoise(i, 41) * 0.25);
+}
+hide(flamMat, "flams"); hide(flamWingMat, "flams"); hide(flamPaleMat, "flams"); hide(flamLegMat, "flams"); hide(beakMat, "flams"); hide(beakTipMat, "flams");
 
 /* Maasai on the rim + their fire */
 const maasaiMat = new THREE.MeshStandardMaterial({ color: "#b03428", flatShading: true, roughness: 1, transparent: true });
@@ -364,7 +481,7 @@ const CHAPTERS = [
   { skyTop: "#a9c8e0", skyMid: "#fdeef0", skyBot: "#f9dbe0", fog: ["#f2d4d8", 0.0044],
     hemiSky: "#fdeef0", hemiGnd: "#9a8f7a", hemiI: 0.95, sunC: "#ffe8e0", sunI: 1.4, sunPos: [-40, 40, 40],
     sunDisc: ["#ffeef0", 0.8], moon: 0, stars: 0,
-    water: "#e5a7b4", animals: 0, herds: 0, flams: 1, maasai: 0, fire: 0, birds: 0.5,
+    water: "#ddb2b8", animals: 0, herds: 0, flams: 1, maasai: 0, fire: 0, birds: 0.5,
     view: { pos: [16, 2.2, 2], yaw: 1.5, pitch: -0.08 },
     night: false,
     caption: "A lake blushing with flamingos.", whisper: "They feed with their heads upside down." },
