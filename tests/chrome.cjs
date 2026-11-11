@@ -36,8 +36,7 @@ for(const width of (process.env.WIDTHS?process.env.WIDTHS.split(",").map(Number)
   await q.screenshot({path:`${out}/${width}-${reduced}-quiet.png`});
   if(width>500){await q.mouse.move(600,820);await q.waitForTimeout(500);assert.ok(await vis(q,'#dock'),'bottom edge wakes');await q.mouse.move(600,300);await q.waitForTimeout(3300);assert.ok(await q.$eval('#dock',e=>getComputedStyle(e).visibility==='hidden'),'re-retires');}
   await q.click('#hint',{force:true});await q.waitForTimeout(500);assert.ok(await vis(q,'#dock'),'hint wakes');
-  await q.screenshot({path:`${out}/${width}-${reduced}-woken.png`});
-  await q.click('#pin-controls');await q.waitForTimeout(3300);assert.ok(await vis(q,'#dock'),'pin holds');
+  await q.click('#pin-controls');await q.screenshot({path:`${out}/${width}-${reduced}-woken.png`});await q.waitForTimeout(3300);assert.ok(await vis(q,'#dock'),'pin holds');
   assert.equal(await q.evaluate(()=>localStorage.getItem('ngorongoro-chrome-pin')),'1');
   assert.deepEqual(errors,[]);results.push({width,reduced,ok:true});await ctx.close();}}
 fs.writeFileSync(path.join(out,'proof.json'),JSON.stringify({url,results},null,2));console.log('PASS',JSON.stringify(results));
