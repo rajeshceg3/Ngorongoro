@@ -4,7 +4,7 @@
  * - setScene(name) crossfades layer gains; setOn(false) ramps master to 0 (mute keeps ctx).
  * - Suspends when the tab is hidden, resumes when visible if still on. */
 
-import { mulberry32 } from './soundscape-layers.js';
+import { makeCtx } from './soundscape-layers.js';
 
 export function createSoundscape(program, { masterGain = 0.85, fadeSec = 2.0 } = {}) {
   const state = {
@@ -15,11 +15,9 @@ export function createSoundscape(program, { masterGain = 0.85, fadeSec = 2.0 } =
   function renderLayer(sr, id) {
     const def = program.layers[id];
     const seconds = def.seconds || 12;
-    const n = Math.floor(sr * seconds);
-    const rand = mulberry32(def.seed || 1);
-    const ctxLike = { sr, seconds, n, rand, L: new Float32Array(n), R: new Float32Array(n) };
+    const ctxLike = makeCtx(sr, seconds, def.seed || 1);
     const out = def.render(ctxLike) || ctxLike;
-    const buf = state.ctx.createBuffer(2, n, sr);
+    const buf = state.ctx.createBuffer(2, out.L.length, sr);
     buf.copyToChannel(out.L, 0); buf.copyToChannel(out.R, 1);
     return buf;
   }

@@ -16,18 +16,24 @@ const TAU = Math.PI * 2;
 
 export function makeCtx(sr, seconds, seed) {
   const n = Math.floor(sr * seconds);
-  return { sr, seconds, n, rand: mulberry32(seed), L: new Float32Array(n), R: new Float32Array(n) };
+  const cont = Math.floor(sr * 3); /* continuation samples for the seamless fold */
+  return { sr, seconds, n, rand: mulberry32(seed), L: new Float32Array(n + cont), R: new Float32Array(n + cont) };
 }
 
-/* Crossfade the loop seam: blend the head into the tail so buf[N-1] -> buf[0] is smooth. */
-export function seam(ctx, fadeSec = 0.25) {
-  const X = Math.min(Math.floor(ctx.sr * fadeSec), ctx.n >> 2);
+/* Seamless loop fold: generators render n + 3s of continuation. The head is
+ * blended from the continuation (raw[n+i]) back to the original (raw[i]) over
+ * fadeSec, so out[n-1] = raw[n-1] and out[0] ~= raw[n] are truly adjacent.
+ * The blend zone is a phase mix, inaudible for noise beds. */
+export function seam(ctx, fadeSec = 0.5) {
+  const n = ctx.n;
+  const X = Math.min(Math.floor(ctx.sr * fadeSec), ctx.L.length - n);
   for (let i = 0; i < X; i++) {
-    const t = i / X, s = Math.sin(t * Math.PI / 2), c = Math.cos(t * Math.PI / 2);
-    const j = ctx.n - X + i;
-    ctx.L[j] = ctx.L[j] * c + ctx.L[i] * s;
-    ctx.R[j] = ctx.R[j] * c + ctx.R[i] * s;
+    const th = (i / X) * Math.PI / 2, sn = Math.sin(th) ** 2, cs = Math.cos(th) ** 2;
+    ctx.L[i] = ctx.L[i] * sn + ctx.L[n + i] * cs;
+    ctx.R[i] = ctx.R[i] * sn + ctx.R[n + i] * cs;
   }
+  ctx.L = ctx.L.slice(0, n);
+  ctx.R = ctx.R.slice(0, n);
   return ctx;
 }
 
@@ -38,7 +44,7 @@ export function windNoise(ctx, { color = 0.02, gustRate = 0.07, gustDepth = 0.55
     const b = ctx[ch];
     let v = 0, gust = 1, gTarget = 1, gCount = 0;
     const gWindow = Math.max(1, Math.floor(ctx.sr * gustRate * 20));
-    for (let i = 0; i < ctx.n; i++) {
+    for (let i = 0; i < ctx.L.length; i++) {
       v = (1 - color) * v + color * (rand() * 2 - 1);
       if (gCount-- <= 0) { gTarget = 1 - gustDepth + gustDepth * 2 * rand(); gCount = gWindow; }
       gust += (gTarget - gust) * 0.0004;
@@ -55,7 +61,7 @@ export function whistleWind(ctx, { fMin = 300, fMax = 1200, wander = 0.05, q = 6
     const b = ctx[ch];
     let f = (fMin + fMax) / 2, fT = f, x1 = 0, x2 = 0, y1 = 0, y2 = 0, cnt = 0;
     const win = Math.floor(ctx.sr * wander * 40);
-    for (let i = 0; i < ctx.n; i++) {
+    for (let i = 0; i < ctx.L.length; i++) {
       if (cnt-- <= 0) { fT = fMin + (fMax - fMin) * rand(); cnt = win; }
       f += (fT - f) * 0.0002;
       const w = TAU * f / ctx.sr, alpha = Math.sin(w) / (2 * q), cw = Math.cos(w);
@@ -76,7 +82,7 @@ function filteredBed(ctx, { color = 0.15, rate = 0.4, depth = 0.7, gain = 0.5, s
   for (const ch of ['L', 'R']) {
     const b = ctx[ch];
     let v = 0, ph = rand() * TAU;
-    for (let i = 0; i < ctx.n; i++) {
+    for (let i = 0; i < ctx.L.length; i++) {
       v = (1 - color) * v + color * (rand() * 2 - 1);
       let env = 1 - depth / 2 + depth * Math.sin(ph);
       if (rhythmSec > 0) {
@@ -86,7 +92,9 @@ function filteredBed(ctx, { color = 0.15, rate = 0.4, depth = 0.7, gain = 0.5, s
       b[i] = v * gain * env * (0.5 / color) * 0.05;
     }
   }
-  return seam(ctx, 0.5);
+  /* very dark noise swings slowly; the seam fold must span its period */
+  const fade = Math.min(ctx.seconds / 4, Math.max(0.5, 0.02 / color));
+  return seam(ctx, fade);
 }
 
 /* Water lapping on a shore: rhythmic gentle swells. */
@@ -217,7 +225,7 @@ function resonBand(ctx, { f = 5200, q = 18, gain = 0.2, seed = 41, pulseHz = 0, 
     const alpha = Math.sin(w) / (2 * q), cw = Math.cos(w), a0 = 1 + alpha;
     const b0 = alpha / a0, b2 = -alpha / a0, a1 = -2 * cw / a0, a2 = (1 - alpha) / a0;
     let x1 = 0, x2 = 0, y1 = 0, y2 = 0, ph = rand() * TAU;
-    for (let i = 0; i < ctx.n; i++) {
+    for (let i = 0; i < ctx.L.length; i++) {
       const x = rand() * 2 - 1;
       const y = b0 * x + b2 * x2 - a1 * y1 - a2 * y2;
       x2 = x1; x1 = x; y2 = y1; y1 = y;
@@ -290,7 +298,6 @@ export function bloops(ctx, { count = 26, fLo = 190, fHi = 420, gain = 0.22, see
 /* Geyser / steam hiss burst bed: swell-decay noise bursts over a hiss floor. */
 export function steam(ctx, { count = 5, gain = 0.3, floor = 0.06, seed = 46 } = {}) {
   filteredBed(ctx, { color: 0.35, gain: floor, seed: seed + 1, rhythmSec: 0.31, rhythmDepth: 0.4 });
-  const n0 = ctx.n;
   const add = makeCtx(ctx.sr, ctx.seconds, seed + 7);
   events(add, {
     count, minGap: 1.8, gain, seed, avoidEdge: 3.5,
@@ -301,7 +308,7 @@ export function steam(ctx, { count = 5, gain = 0.3, floor = 0.06, seed = 46 } = 
       return (e.rand() * 2 - 1) * env * 0.7;
     },
   });
-  for (let i = 0; i < n0; i++) { ctx.L[i] += add.L[i]; ctx.R[i] += add.R[i]; }
+  for (let i = 0; i < ctx.L.length; i++) { ctx.L[i] += add.L[i]; ctx.R[i] += add.R[i]; }
   return ctx;
 }
 
@@ -382,7 +389,7 @@ export function distantEngine(ctx, { f = 68, gain = 0.1, seed = 52, periodSec = 
   for (const ch of ['L', 'R']) {
     const b = ctx[ch];
     const ph0 = rand() * TAU;
-    for (let i = 0; i < ctx.n; i++) {
+    for (let i = 0; i < ctx.L.length; i++) {
       const t = i / ctx.sr;
       const swell = Math.max(0, Math.sin(TAU * t / periodSec + ph0)) ** 2.4;
       b[i] = (Math.sin(TAU * f * t) + 0.5 * Math.sin(TAU * f * 2.02 * t) + 0.25 * Math.sin(TAU * f * 3.1 * t)) * swell * gain * 0.4;

@@ -7,7 +7,7 @@
 
 import { writeFileSync } from 'node:fs';
 import { pathToFileURL } from 'node:url';
-import { mulberry32 } from '../soundscape/soundscape-layers.js';
+import { makeCtx } from '../soundscape/soundscape-layers.js';
 
 const [progPath, outPath, ...rest] = process.argv.slice(2);
 const args = Object.fromEntries(rest.map((a, i, arr) => a.startsWith('--') ? [a.slice(2), arr[i + 1]] : null).filter(Boolean));
@@ -19,9 +19,7 @@ const program = (await import(pathToFileURL(progPath))).default;
 function renderLayer(sr, id) {
   const def = program.layers[id];
   const seconds = def.seconds || 12;
-  const n = Math.floor(sr * seconds);
-  const rand = mulberry32(def.seed || 1);
-  const ctxLike = { sr, seconds, n, rand, L: new Float32Array(n), R: new Float32Array(n) };
+  const ctxLike = makeCtx(sr, seconds, def.seed || 1);
   return def.render(ctxLike) || ctxLike;
 }
 
