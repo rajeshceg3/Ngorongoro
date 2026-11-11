@@ -184,8 +184,32 @@ scene.add(animalRoot);
 const hidelist = []; // {obj, key} faded per chapter
 const hide = (obj, key) => { if(!hidelist.some(h=>h.obj===obj)) hidelist.push({obj,key}); obj.depthWrite=false; };
 
-const eleMat = new THREE.MeshStandardMaterial({ color: "#8f8478", flatShading: false, roughness: 0.95, transparent: true });
-const eleDark = new THREE.MeshStandardMaterial({ color: "#7c7266", flatShading: false, roughness: 1, transparent: true });
+// Shared procedural pachyderm hide: mottled base + fine wrinkle strokes, used as a bump map.
+const hideTex = (() => {
+  const c = document.createElement('canvas'); c.width = c.height = 256;
+  const ctx = c.getContext('2d');
+  ctx.fillStyle = '#808080'; ctx.fillRect(0,0,256,256);
+  // mottling
+  for (let i = 0; i < 900; i++) {
+    const x = Math.random()*256, y = Math.random()*256, r = 2+Math.random()*6;
+    ctx.fillStyle = 'rgba(' + (110+Math.random()*40|0) + ',' + (110+Math.random()*40|0) + ',' + (110+Math.random()*40|0) + ',0.25)';
+    ctx.beginPath(); ctx.arc(x,y,r,0,6.28); ctx.fill();
+  }
+  // wrinkle strokes: short intersecting creases, both directions
+  ctx.lineWidth = 2.2; ctx.lineCap = 'round';
+  for (let i = 0; i < 260; i++) {
+    const x = Math.random()*256, y = Math.random()*256, a = Math.random()*6.28, len = 6+Math.random()*16;
+    ctx.strokeStyle = Math.random() < 0.5 ? 'rgba(40,40,40,0.8)' : 'rgba(215,215,215,0.6)';
+    ctx.beginPath(); ctx.moveTo(x,y);
+    ctx.quadraticCurveTo(x+Math.cos(a)*len*0.5, y+Math.sin(a)*len*0.5+(Math.random()*4-2), x+Math.cos(a)*len, y+Math.sin(a)*len);
+    ctx.stroke();
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(2.5, 2.5);
+  return t;
+})();
+const eleMat = new THREE.MeshStandardMaterial({ color: "#8f8478", flatShading: false, roughness: 0.95, transparent: true, bumpMap: hideTex, bumpScale: 0.22 });
+const eleDark = new THREE.MeshStandardMaterial({ color: "#7c7266", flatShading: false, roughness: 1, transparent: true, bumpMap: hideTex, bumpScale: 0.18 });
 const tuskMat = new THREE.MeshStandardMaterial({ color: "#e9dfc8", flatShading: false, roughness: 0.55, transparent: true });
 const shadowTex = (() => {
   const c = document.createElement('canvas'); c.width = c.height = 128;
@@ -200,6 +224,7 @@ function contactShadow(g, rx, rz, y=0.03) {
     new THREE.MeshBasicMaterial({ map: shadowTex, transparent: true, depthWrite: false }));
   m.rotation.x = -Math.PI/2; m.position.y = y; m.renderOrder = 1; g.add(m);
 }
+
 const elephants = [];
 function elephant(x, z, s, yaw) {
   const g = new THREE.Group();
@@ -264,8 +289,8 @@ elephant(-9.5, -9.5, 0.95, 0.25);
 elephant(-18, -4, 0.7, -0.2);
 elephant(-6, -13, 0.45, 0.3);
 
-const rhinoMat = new THREE.MeshStandardMaterial({ color: "#8d8478", flatShading: false, roughness: 1, transparent: true });
-const rhinoDark = new THREE.MeshStandardMaterial({ color: "#776e62", flatShading: false, roughness: 1, transparent: true });
+const rhinoMat = new THREE.MeshStandardMaterial({ color: "#8d8478", flatShading: false, roughness: 1, transparent: true, bumpMap: hideTex, bumpScale: 0.25 });
+const rhinoDark = new THREE.MeshStandardMaterial({ color: "#776e62", flatShading: false, roughness: 1, transparent: true, bumpMap: hideTex, bumpScale: 0.22 });
 const rhinos = [];
 {
   const g = new THREE.Group();
