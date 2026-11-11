@@ -212,7 +212,7 @@ function elephant(x, z, s, yaw) {
   }
   // barrel body
   const body = new THREE.Mesh(new THREE.SphereGeometry(1.5, 28, 20), eleMat);
-  body.scale.set(1.5, 1.02, 0.92); body.position.y = 2.5; g.add(body);
+  body.scale.set(1.72, 1.0, 0.9); body.position.y = 2.5; g.add(body);
   // shoulder hump + sloping back
   const hump = new THREE.Mesh(new THREE.SphereGeometry(0.85, 20, 14), eleMat);
   hump.position.set(0.95, 3.15, 0); g.add(hump);
@@ -374,7 +374,7 @@ function flamingo(x, z, yaw, s) {
   }
   // teardrop body, tail up-tilted
   const body = new THREE.Mesh(new THREE.SphereGeometry(0.3, 20, 14), flamMat);
-  body.scale.set(1.6, 1.05, 0.88); body.position.y = 1.05; g.add(body);
+  body.scale.set(1.5, 0.95, 0.82); body.position.y = 1.02; g.add(body);
   const tail = new THREE.Mesh(new THREE.ConeGeometry(0.12, 0.35, 8), flamWingMat);
   tail.position.set(-0.42, 1.12, 0); tail.rotation.z = 1.9; g.add(tail);
   // folded wings: deeper pink, black flight-feather edge
@@ -386,32 +386,41 @@ function flamingo(x, z, yaw, s) {
     edge.scale.set(0.9, 0.28, 0.2); edge.position.set(-0.28, 1.1, side * 0.2);
     g.add(edge);
   }
-  // S-curved neck
-  const neckCurve = new THREE.CatmullRomCurve3([
-    new THREE.Vector3(0.3, 1.02, 0), new THREE.Vector3(0.56, 1.45, 0),
-    new THREE.Vector3(0.48, 1.8, 0), new THREE.Vector3(0.62, 2.02, 0), new THREE.Vector3(0.72, 2.06, 0)
-  ]);
-  const neck = new THREE.Mesh(new THREE.TubeGeometry(neckCurve, 24, 0.058, 8, false), flamMat);
+  // S-curved neck: upright alert pose, or head-down filter-feeding pose
+  const feeding = (vnoise(x * 3.1, z * 2.7) > 0.62);
+  const neckPts = feeding ? [
+    new THREE.Vector3(0.5, 1.05, 0), new THREE.Vector3(0.75, 0.88, 0),
+    new THREE.Vector3(0.85, 0.62, 0), new THREE.Vector3(0.95, 0.38, 0), new THREE.Vector3(0.9, 0.22, 0)
+  ] : [
+    new THREE.Vector3(0.5, 1.08, 0), new THREE.Vector3(0.72, 1.38, 0),
+    new THREE.Vector3(0.52, 1.62, 0), new THREE.Vector3(0.68, 1.82, 0), new THREE.Vector3(0.8, 1.86, 0)
+  ];
+  const neckCurve = new THREE.CatmullRomCurve3(neckPts);
+  const neck = new THREE.Mesh(new THREE.TubeGeometry(neckCurve, 24, 0.07, 8, false), flamMat);
   g.add(neck);
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.1, 12, 10), flamPaleMat);
-  head.position.set(0.76, 2.06, 0); g.add(head);
+  const tipPt = neckPts[4];
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.11, 12, 10), flamPaleMat);
+  head.position.copy(tipPt); g.add(head);
   // bent beak: pale base, black down-turned tip
-  const beak = new THREE.Mesh(new THREE.ConeGeometry(0.045, 0.18, 8), beakMat);
-  beak.position.set(0.88, 2.05, 0); beak.rotation.z = -1.35; g.add(beak);
-  const tip = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.12, 8), beakTipMat);
-  tip.position.set(0.97, 1.98, 0); tip.rotation.z = -2.2; g.add(tip);
+  const beak = new THREE.Mesh(new THREE.ConeGeometry(0.05, 0.2, 8), beakMat);
+  beak.position.set(tipPt.x + 0.13, tipPt.y - 0.02, 0); beak.rotation.z = -1.35; g.add(beak);
+  const tip = new THREE.Mesh(new THREE.ConeGeometry(0.042, 0.12, 8), beakTipMat);
+  tip.position.set(tipPt.x + 0.22, tipPt.y - 0.1, 0); tip.rotation.z = -2.2; g.add(tip);
   contactShadow(g, 0.55, 0.4, 0.05);
   g.position.set(x, 0.1, z);
   g.rotation.y = yaw; g.scale.setScalar(s);
   scene.add(g);
-  flams.push({ g, neck, head, phase: vnoise(x, z) * 6.28 });
+  flams.push({ g, neck, head, headBaseY: head.position.y, phase: vnoise(x, z) * 6.28 });
 }
 for (let i = 0; i < 14; i++) {
   const a = vnoise(i, 23) * 6.28, r = 8 + vnoise(i, 29) * 5;
   const fx = Math.cos(a) * r * 1.2, fz = Math.sin(a) * r * 0.75;
-  if (Math.hypot(fx - 16, fz - 2) < 7.5) continue; /* keep the flock clear of the Lake camera */
+  if (Math.hypot(fx - 16, fz - 2) < 3.5) continue; /* no frame-fillers on the Lake camera */
   flamingo(fx, fz, vnoise(i, 31) * 6.28, 0.85 + vnoise(i, 41) * 0.25);
 }
+/* a deliberate mid-distance group in the Lake camera's view cone */
+const nearFlock = [[8.0, 2.0, -0.6, 1.05], [6.0, 0.0, 0.4, 0.95], [7.0, 5.0, -1.2, 1.0], [5.0, -2.5, 0.9, 0.9], [9.0, 6.5, -0.3, 1.1]];
+for (const [fx, fz, fyaw, fs] of nearFlock) flamingo(fx, fz, fyaw, fs);
 hide(flamMat, "flams"); hide(flamWingMat, "flams"); hide(flamPaleMat, "flams"); hide(flamLegMat, "flams"); hide(beakMat, "flams"); hide(beakTipMat, "flams");
 
 /* Maasai on the rim + their fire */
@@ -741,8 +750,8 @@ function tick() {
     for (const r of rhinos) r.g.rotation.y += Math.sin(t * 0.13 + r.phase) * 0.0003;
     for (const h of herds) h.g.position.y = h.baseY + Math.sin(t * 1.9 + h.phase) * 0.02;
     for (const f of flams) {
-      f.neck.rotation.z = -0.35 + Math.sin(t * 1.4 + f.phase) * 0.18;
-      f.head.position.y = 1.32 + Math.sin(t * 1.4 + f.phase) * 0.08;
+      f.g.rotation.z = Math.sin(t * 1.4 + f.phase) * 0.02;
+      f.head.position.y = f.headBaseY + Math.sin(t * 1.4 + f.phase) * 0.05;
     }
     for (const b of birds) {
       const a = t * b.speed + b.phase;
