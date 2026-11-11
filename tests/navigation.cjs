@@ -21,6 +21,7 @@ const { chromium } = require("playwright"),
         });
         let errors = [];
         p.on("pageerror", (e) => errors.push(e.message));
+        await p.addInitScript(() => { try { localStorage.setItem("ngorongoro-chrome-pin", "1"); } catch (e) {} });
         await p.goto(base);
         await p.waitForSelector("#veil.gone");
         for (let i = 0; i < 4; i++) {

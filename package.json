@@ -2,7 +2,7 @@
   "name": "ngorongoro",
   "private": true,
   "scripts": {
-    "test": "node --check main.js && node tests/navigation.cjs",
+    "test": "node --check main.js && node tests/navigation.cjs && node tests/chrome.cjs",
     "audio:preview": "node tools/render-audio-preview.mjs soundscape/soundscape-program.js verification/ngorongoro-soundscape-preview.wav"
   },
   "devDependencies": {
