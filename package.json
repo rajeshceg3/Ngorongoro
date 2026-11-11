@@ -1,1 +1,11 @@
-{"name":"ngorongoro","private":true,"scripts":{"test":"node --check main.js && node tests/navigation.cjs"},"devDependencies":{"playwright":"1.58.2"}}
+{
+  "name": "ngorongoro",
+  "private": true,
+  "scripts": {
+    "test": "node --check main.js && node tests/navigation.cjs",
+    "audio:preview": "node tools/render-audio-preview.mjs soundscape/soundscape-program.js verification/ngorongoro-soundscape-preview.wav"
+  },
+  "devDependencies": {
+    "playwright": "1.58.2"
+  }
+}

@@ -1,4 +1,6 @@
 import * as THREE from "three";
+import { createSoundscape } from './soundscape/soundscape-engine.js';
+import soundProgram from './soundscape/soundscape-program.js';
 
 /* Ngorongoro, rebuilt as a real 3D bowl: drag to look around 360, chapters
    move the viewpoint (rim dawn, animal floor, flamingo lake, Maasai night). */
@@ -468,6 +470,7 @@ function setChapter(i) {
   /* the chapter defines its own entry view; the viewer's azimuth is preserved
      per the world rules - Reset returns to the entry view */
   rig.entryYaw = c.view.yaw; rig.entryPitch = c.view.pitch;
+  soundscape.setScene(AUDIO_SCENES[i]);
   /* each chapter defines its own entry view: glide to it (world rules ch.4) */
   resetting = true;
   document.body.classList.toggle("night", c.night);
@@ -528,55 +531,28 @@ dock.addEventListener("keydown", (e) => {
   }
 });
 
-/* ---------- opt-in crater sound, off by default ---------- */
+/* ---------- opt-in crater sound, off by default ----------
+   The soundscape is synthesized from what the crater holds - rim wind and
+   doves at dawn, insects over the floor by day, lapping water and a flamingo
+   flock at the lake, crickets, hyena and herd bells at night. No samples,
+   no voice; it follows the chapter and starts only on request. */
+const AUDIO_SCENES = ["dawn", "day", "lake", "night"];
+const soundscape = createSoundscape(soundProgram, { masterGain: 0.9 });
 const audioOrb = document.getElementById("audio-orb");
-let audio = null;
-function buildAudio(ctx) {
-  const master = ctx.createGain(); master.gain.value = 0; master.connect(ctx.destination);
-  const len = ctx.sampleRate * 2;
-  const buf = ctx.createBuffer(1, len, ctx.sampleRate);
-  const d = buf.getChannelData(0);
-  for (let i = 0; i < len; i++) d[i] = Math.random() * 2 - 1;
-  const wind = ctx.createBufferSource(); wind.buffer = buf; wind.loop = true;
-  const windF = ctx.createBiquadFilter(); windF.type = "bandpass"; windF.frequency.value = 320; windF.Q.value = 0.6;
-  const windG = ctx.createGain(); windG.gain.value = 0.05;
-  wind.connect(windF).connect(windG).connect(master);
-  wind.start();
-  const lfo = ctx.createOscillator(); lfo.frequency.value = 0.07;
-  const lfoG = ctx.createGain(); lfoG.gain.value = 0.025;
-  lfo.connect(lfoG).connect(windG.gain); lfo.start();
-  /* sparse bird chirps, daytime texture */
-  function chirp(when) {
-    const o = ctx.createOscillator(), g = ctx.createGain();
-    o.type = "sine";
-    o.frequency.setValueAtTime(2200 + Math.random() * 800, when);
-    o.frequency.exponentialRampToValueAtTime(1400, when + 0.12);
-    g.gain.setValueAtTime(0, when);
-    g.gain.linearRampToValueAtTime(0.028, when + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.0004, when + 0.22);
-    o.connect(g).connect(master);
-    o.start(when); o.stop(when + 0.3);
+let audioStarted = false;
+audioOrb.addEventListener("click", async () => {
+  if (!audioStarted) {
+    audioStarted = true;
+    await soundscape.start(AUDIO_SCENES[chapter]);
+  } else {
+    soundscape.setOn(!soundscape.on);
   }
-  let chirpTimer = null;
-  function scheduleChirps() {
-    chirp(ctx.currentTime + 0.1 + Math.random() * 0.5);
-    chirpTimer = setTimeout(scheduleChirps, 2500 + Math.random() * 5500);
-  }
-  return { master, start() { master.gain.linearRampToValueAtTime(0.9, ctx.currentTime + 1.5); scheduleChirps(); },
-           stop() { master.gain.linearRampToValueAtTime(0, ctx.currentTime + 0.8); clearTimeout(chirpTimer); } };
-}
-audioOrb.addEventListener("click", () => {
-  if (!audio) {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    audio = { ctx, engine: buildAudio(ctx), on: false };
-  }
-  audio.ctx.resume().then(() => { audioOrb.dataset.ctxState = audio.ctx.state; });
-  audio.on = !audio.on;
-  if (audio.on) audio.engine.start(); else audio.engine.stop();
-  audioOrb.setAttribute("aria-pressed", String(audio.on));
-  audioOrb.setAttribute("aria-label", audio.on ? "Crater sounds, on" : "Crater sounds, off");
+  audioOrb.setAttribute("aria-pressed", String(soundscape.on));
+  audioOrb.setAttribute("aria-label", soundscape.on ? "Crater sounds, on" : "Crater sounds, off");
   wakeChrome();
 });
+document.addEventListener("visibilitychange", () => soundscape.handleVisibility());
+window.__soundscape = soundscape;
 
 /* ---------- loop ---------- */
 const clock = new THREE.Clock();
